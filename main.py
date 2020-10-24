@@ -7,12 +7,12 @@ from Point import *
 import rt
 import math
 import threading
-
+from sys import exit
 
 def raytrace():
     #Raytraces the scene progessively
     i = 0
-    while i < 50000 :
+    while i < 50:
         #random point in the image
         point = Point(random.uniform(0, 500), random.uniform(0, 500))
         #pixel color
@@ -22,6 +22,7 @@ def raytrace():
             #calculates direction to light source
 
             dir = source-point
+            pintarDiagonales(Point(0,0), dir)
             #add jitter
             #dir.x += random.uniform(0, 25)
             #dir.y += random.uniform(0, 25)
@@ -102,6 +103,18 @@ segments = [
             ([Point(180, 250), Point(180, 135)]),
             ]
 
+
+#PINTA DIAGONALES
+def pintarDiagonales(punto1,punto2):
+    colorSegm=(16, 186, 29);
+    m = (punto2.y - punto1.y)/(punto2.x - punto1.x);
+    b = punto1.y - (m * punto1.x);
+    i = int(punto1.x);
+    end = int(punto2.x);
+    for x in range(i,end):
+        y = m*x + b;
+        px[int(x)][int(y)]=colorSegm;
+
 #Pinta la segmento entre esos 2 puntos
 def pintarLinea(punto1,punto2):
     #Color de los segmentos
@@ -155,22 +168,23 @@ while True:
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                    pygame.quit()
+                    exit()
                     break
-                    #exit()
+                    
 
         # Clear screen to white before drawing
         screen.fill((255, 255, 255))
-   
         # Get a numpy array to display from the simulation
         npimage=getFrame()
 
         # Convert to a surface and splat onto screen offset by border width and height
         surface = pygame.surfarray.make_surface(npimage)
-            
         screen.blit(surface, (border, border))
+        
 
         pygame.display.flip()
+        pygame.draw.line(surface, (255,255,255), (10,15), (50,25))
         clock.tick(60)
-pygame.quit()
 
 
