@@ -111,11 +111,11 @@ def raytrace(sonar):
         if not free:
             
             #---------Pinta una cruz en el pinto de intersección---------------------
-            px[int(intersectionPoint.x)][int(intersectionPoint.y)] = (255,0,0);
-            px[int(intersectionPoint.x+1)][int(intersectionPoint.y)] = (255,0,0);
-            px[int(intersectionPoint.x-1)][int(intersectionPoint.y)] = (255,0,0);
-            px[int(intersectionPoint.x)][int(intersectionPoint.y-1)] = (255,0,0);
-            px[int(intersectionPoint.x)][int(intersectionPoint.y+1)] = (255,0,0);
+            px[int(intersectionPoint.x)][int(intersectionPoint.y)] = (255,150,0);
+            px[int(intersectionPoint.x+1)][int(intersectionPoint.y)] = (255,150,0);
+            px[int(intersectionPoint.x-1)][int(intersectionPoint.y)] = (255,150,0);
+            px[int(intersectionPoint.x)][int(intersectionPoint.y-1)] = (255,150,0);
+            px[int(intersectionPoint.x)][int(intersectionPoint.y+1)] = (255,150,0);
             #-------------------------------------------------------------------------
             
             #!!!!!!!!!!!!!!!!
