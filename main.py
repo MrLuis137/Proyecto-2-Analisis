@@ -22,7 +22,7 @@ def raytrace():
             #calculates direction to light source
 
             dir = source-point
-            pintarDiagonales(Point(0,0), dir)
+            pintarLinea(Point(250,250),point)
             #add jitter
             #dir.x += random.uniform(0, 25)
             #dir.y += random.uniform(0, 25)
@@ -106,11 +106,17 @@ segments = [
 
 #PINTA DIAGONALES
 def pintarDiagonales(punto1,punto2):
-    colorSegm=(16, 186, 29);
+    colorSegm=(151, 210, 23)
     m = (punto2.y - punto1.y)/(punto2.x - punto1.x);
     b = punto1.y - (m * punto1.x);
-    i = int(punto1.x);
-    end = int(punto2.x);
+    
+    if(int(punto1.x)<int(punto2.x)):
+        i = int(punto1.x);
+        end = int(punto2.x);
+    else:
+        end = int(punto1.x);
+        i = int(punto2.x);
+        
     for x in range(i,end):
         y = m*x + b;
         px[int(x)][int(y)]=colorSegm;
@@ -118,7 +124,7 @@ def pintarDiagonales(punto1,punto2):
 #Pinta la segmento entre esos 2 puntos
 def pintarLinea(punto1,punto2):
     #Color de los segmentos
-    colorSegm=(16, 186, 29)
+    colorSegm=(210, 23, 23);
 
     #Cuando el valor de X es el mismo y cambia su posicion en Y (Segmento Vertical)
     if punto1.x==punto2.x:
@@ -142,8 +148,9 @@ def pintarLinea(punto1,punto2):
             for e in range(punto2.x,punto1.x+1):
                 px[int(e)][int(punto2.y)]=colorSegm
     else:
-        print("Algo mal")
-    
+        #Al no coincidir ninguno de los valores del par es una diagonal
+        pintarDiagonales(punto1,punto2)
+        
 #Pinta todos los segmentos
 def pintarSegmentos(segments):
     #Para cada segmento envia los 2 puntos.
