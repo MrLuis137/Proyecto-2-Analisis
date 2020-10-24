@@ -4,15 +4,16 @@ from pygame.locals import *
 import random
 from PIL import Image
 from Point import *
+from Sonar import *
 import rt
 import math
 import threading
 from sys import exit
 
+""" ------------------------CODIGO ORIGINAL DEL PROFE--------------------
 def raytrace():
     #Raytraces the scene progessively
-    i = 0
-    while i < 50:
+    while True :
         #random point in the image
         point = Point(random.uniform(0, 500), random.uniform(0, 500))
         #pixel color
@@ -22,7 +23,6 @@ def raytrace():
             #calculates direction to light source
 
             dir = source-point
-            pintarDiagonales(Point(0,0), dir)
             #add jitter
             #dir.x += random.uniform(0, 25)
             #dir.y += random.uniform(0, 25)
@@ -55,7 +55,91 @@ def raytrace():
             #average pixel value and assign
             px[int(point.x)][int(point.y)] = pixel // len(sources)
             i= i+1
+------------------------CODIGO ORIGINAL DEL PROFE--------------------"""
+
+
+#--------------------------------Raytrace--------------------------------
+#------------------------------------------------------------------------
+
+def raytrace(sonar):
+    #Raytraces the scene progessively
+    i = 0
+    while i < 1:
+        #random point in the image
+        point = Point(random.uniform(0, 500), random.uniform(0, 500))
+        #pixel color
+        pixel = 0
+
+        #Obtiene la posición del sonar(por ahora está asignado al origen del rayo,
+        #pero probablemente lo manejemos por aparte)
+        source = sonar.pos;
+        point = Point(499, sonar.pos.y);
+        dir = point;
+        print(dir);
+        pintarDiagonales(source,point);
+        #add jitter
+        #dir.x += random.uniform(0, 25)
+        #dir.y += random.uniform(0, 25)
+
+        #distance between point and light source
+        length = rt.length(dir)
+        #normalized distance to source
+        length2 = rt.length(rt.normalize(dir))
+
+        free = True
+        intersectionPoint = Point(0,0);
+        for seg in segments:
+            #check if ray intersects with segment
+            #!!!!!!!!!!!!!!!!!!!!!
+            # A diferencia del codigo del código original, se calcula la dirección a
+            #partir del origen hasta un punto representado por dir
+            #!!!!!!!!!!!!!!!!!!!!!
+            dist = rt.raySegmentIntersect(source, dir, seg[0], seg[1])
+            #if intersection, or if intersection is closer than light source
+            if  dist > 0 and length2>dist:
+                free = False
+                #Se obtiene el punto de intesección
+                 #!!!!!!!!!!!!!!!!!!!!!
+                #BUGUEADO, NO SE SI EL CÓDIGO DEL PROFE ESTÁ MAL, O FUE QUE LO ENTENDÍ MAL.
+                #LA POSICIÓN EN X DE LA INTERSECCÓN ES CORRECTA, PERO SU POSICIÓN EN Y ESTÁ
+                #CORRIDA HACIA ABAJO Y NOS VA A AFECTAR A LA HORA DE CALCULAR LOS REBOTES.
+                 #!!!!!!!!!!!!!!!!!!!!!
+                intersectionPoint = rt.intersectionPoint(source, dir, dist);
+                break
+
+        if not free:
+            
+            #---------Pinta una cruz en el pinto de intersección---------------------
+            px[int(intersectionPoint.x)][int(intersectionPoint.y)] = (255,0,0);
+            px[int(intersectionPoint.x+1)][int(intersectionPoint.y)] = (255,0,0);
+            px[int(intersectionPoint.x-1)][int(intersectionPoint.y)] = (255,0,0);
+            px[int(intersectionPoint.x)][int(intersectionPoint.y-1)] = (255,0,0);
+            px[int(intersectionPoint.x)][int(intersectionPoint.y+1)] = (255,0,0);
+            #-------------------------------------------------------------------------
+            
+            #!!!!!!!!!!!!!!!!
+            # Por ahora este código se puede quedar comentado puesto que trabaja sobre la imagen de fondo
+            # que estaba usando el profe, para nosotros no es necesario pero talvez nos sirva para tomar 
+            # ideas con lo de la intensidad
+            #!!!!!!!!!!!!!!!!
+            """intensity = (1-(length/500))**2
+            #print(len)
+            #intensity = max(0, min(intensity, 255))
+            values = (ref[int(point.y)][int(point.x)])[:3]
+            #combine color, light source and light color
+            values = values * intensity * light
+
+            #add all light sources
+            pixel += values
+
+            #average pixel value and assign
+            px[int(point.x)][int(point.y)] = pixel // len(sources)"""
+        i= i+1
     print("ended")
+
+
+#----------------------------Fin Raytrace--------------------------------
+#------------------------------------------------------------------------
 
 def getFrame():
     # grabs the current image and returns it
@@ -80,15 +164,15 @@ i = Image.new("RGB", (500, 500), (0, 0, 0) )
 px = np.array(i)
 
 #reference image for background color
-im_file = Image.open("fondo.png")
-ref = np.array(im_file)
+#im_file = Image.open("fondo.png")
+#ref = np.array(im_file)
 
 #light positions
-sources = [ Point(195, 200), Point( 294, 200) ]
+#sources = [ Point(195, 200), Point( 294, 200) ]
 
 #light color
 #light = np.array([1, 1, 0.75])
-light = np.array([1, 1, 1])
+#light = np.array([1, 1, 1])
 
 #warning, point order affects intersection test!!
 segments = [
@@ -107,13 +191,18 @@ segments = [
 #PINTA DIAGONALES
 def pintarDiagonales(punto1,punto2):
     colorSegm=(16, 186, 29);
+    #Calcula la pendiente
     m = (punto2.y - punto1.y)/(punto2.x - punto1.x);
+    #calcula el b
     b = punto1.y - (m * punto1.x);
-    i = int(punto1.x);
-    end = int(punto2.x);
-    for x in range(i,end):
+    x = (punto1.x);
+    end = (punto2.x);
+    
+    while(x <= end):
+        #aplica la formula de las rectas
         y = m*x + b;
         px[int(x)][int(y)]=colorSegm;
+        x+=0.05;
 
 #Pinta la segmento entre esos 2 puntos
 def pintarLinea(punto1,punto2):
@@ -162,7 +251,11 @@ pintarSegmentos(segments)
 #t.start()
 
 #main loop
-raytrace()
+
+#----------------------------Se crea el sonar--------------------------------
+sonar =  Sonar(Point(185,135), Point(22,100));
+#---------------------------------------------------------------------------
+raytrace(sonar);
 while True:
         
         for event in pygame.event.get():
@@ -184,7 +277,6 @@ while True:
         
 
         pygame.display.flip()
-        pygame.draw.line(surface, (255,255,255), (10,15), (50,25))
         clock.tick(60)
 
 
