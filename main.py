@@ -102,6 +102,47 @@ segments = [
             ([Point(180, 250), Point(180, 135)]),
             ]
 
+#Pinta la segmento entre esos 2 puntos
+def pintarLinea(punto1,punto2):
+    #Color de los segmentos
+    colorSegm=(16, 186, 29)
+
+    #Cuando el valor de X es el mismo y cambia su posicion en Y (Segmento Vertical)
+    if punto1.x==punto2.x:
+        #Verifica cual punto es el que tiene menor valor en el eje Y
+        #Y cambia de color los pixeles del segmento
+        if punto1.y<punto2.y:
+            for i in range(punto1.y,punto2.y+1):
+                px[int(punto1.x)][int(i)]=colorSegm
+        else:
+            for i in range(punto2.y,punto1.y+1):
+                px[int(punto1.x)][int(i)]=colorSegm
+
+    #Cuando el valor de Y es el mismo y cambia su posicion en X (Segmento Horizontal)          
+    elif punto1.y==punto2.y:
+        #Verifica cual punto es el que tiene menor valor en el eje X
+        #Y cambia de color los pixeles del segmento
+        if punto1.x<punto2.x:
+            for e in range(punto1.x,punto2.x+1):
+                px[int(e)][int(punto2.y)]=colorSegm
+        else:
+            for e in range(punto2.x,punto1.x+1):
+                px[int(e)][int(punto2.y)]=colorSegm
+    else:
+        print("Algo mal")
+    
+#Pinta todos los segmentos
+def pintarSegmentos(segments):
+    #Para cada segmento envia los 2 puntos.
+    for segment in segments:
+        pintarLinea(segment[0],segment[1])
+        
+#Pinta los segmentos para ver donde choca.
+pintarSegmentos(segments)
+
+
+
+
 #thread setup
 #t = threading.Thread(target = raytrace) # f being the function that tells how the ball should move
 #t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
@@ -114,7 +155,7 @@ while True:
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                    pygame.quit()
+                    break
                     #exit()
 
         # Clear screen to white before drawing
@@ -130,5 +171,6 @@ while True:
 
         pygame.display.flip()
         clock.tick(60)
+pygame.quit()
 
 
