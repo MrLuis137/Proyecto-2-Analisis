@@ -73,11 +73,21 @@ def raytrace(sonar):
 
         #Obtiene la posición del sonar(por ahora está asignado al origen del rayo,
         #pero probablemente lo manejemos por aparte)
-        source = sonar.pos;
-        point = Point(499, sonar.pos.y);
-        dir = point;
-        print(dir);
-        pintarDiagonales(source,point);
+        source = sonar.pos
+        dir = point-source
+        #print(dir);
+        #print(source);
+        #print(point);
+
+        #Ya pintar linea contiene el dibujar diagonal así se usa solo una funcion para dibujar cualquier linea
+        pintarLinea(source,point);
+        
+        #Dibuja los puntos
+        #   Del punto:
+        px[int(point.x)][int(point.y)]=(255,0,255)
+        #   Del la posicion del sonar:
+        px[int(source.x)][int(source.y)]=(255,0,255)
+        
         #add jitter
         #dir.x += random.uniform(0, 25)
         #dir.y += random.uniform(0, 25)
@@ -258,7 +268,7 @@ pintarSegmentos(segments)
 #main loop
 
 #----------------------------Se crea el sonar--------------------------------
-sonar =  Sonar(Point(185,135), Point(22,100));
+sonar =  Sonar(Point(200,300), Point(22,100));
 #---------------------------------------------------------------------------
 raytrace(sonar);
 while True:
