@@ -72,7 +72,7 @@ def raytrace(ray):
         source = sonar.pos
         #random point in the image
         point = Point(random.uniform(0, 550), random.uniform(0, 550));
-        point = Point(549, 200)
+        point = Point(410, 250)
         ray = Ray(1.0,source, point);
     #point = maximizeDirection(source, pointTemp)
     #pixel color
@@ -118,7 +118,7 @@ def raytrace(ray):
 
     if not free:
         ##### Prueba para generar la reflexión
-        ry = generateReflectedRay(intersectionPoint, -35, ray);
+        ry = generateReflectedRay(intersectionPoint, -90, ray);
         pintarLinea(ry.dir , ry.origin);
         #####
         
@@ -161,19 +161,35 @@ def getFrame():
 
 def generateReflectedRay(point, angle, sourceRay):
     origin = sourceRay.origin;
-    m = (origin.y - point.y)/(origin.x - point.x)
-    b = point.y - (m * point.x)
-    #convierte de grados a radianes y obtiene la pendiente a partir del angulo
-    m += math.tan(angle*(math.pi/180))
-    y = m*origin.x + b
+    #Pasa el angulo de grados a radianes
+    angle = angle*(math.pi/180)
+    #Obtiene el seno y el coseno del angulo 
+    cosAngle = math.cos(angle);
+    senAngle = math.sin(angle)
+    #traslada hace una traslación hacia el origen del plano cartesiano.
+    #El origen del rayo corresponde al origen del plano cartesiano con el fin de rotar el rayo a partir de ese punto
+    originX = 0;
+    originY = 0
+    translationX = point.x
+    translationY = point.y 
+    y = origin.y - translationY
+    x = origin.x - translationX
+    #Hace el calculo de X' y Y' utilizando la formula de rotación de ejes
+    xPrima = (x * cosAngle) - (y * senAngle)
+    yPrima = (y * cosAngle) + (x * senAngle)
+    #dir = maximizeDirection(point, Point(origin.x, int(y)))
+    
+    #Se devuelven ambos puntos a sus posiciónes
+    originX = translationX
+    originY = translationY
+    xPrima += translationX
+    yPrima += translationY
     ####################################################
     #FALTA AGREGAR EL CÓDIGO PARA CALCULAR LA PERDIDA DE ENERGÍA
     ####################################################
-    dir = maximizeDirection(point, Point(origin.x, int(y)))
-    print(Point(origin.x, int(y)))
-    print(point)
     intensity = sourceRay.intensity
-    ray = Ray(intensity, point, Point(origin.x, int(y)))
+    ray = Ray(intensity, Point(originX, originY), Point(xPrima, yPrima))
+    #ray = Ray(intensity, point, Point(x, origin.y))
     return ray
 
 
