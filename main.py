@@ -213,10 +213,10 @@ def segHorizontal(origen,destino,seg):
 def getAngle(origen,destino,seg):#Punto de donde sale el rayo, punto donde interseca y el segmento con el que choca
     #Decidir si el segmentoes verical
     if seg[0].x==seg[1].x:
-         return angulo=segVertical(origen,destino,seg)    
+         return segVertical(origen,destino,seg)    
     #Horizonatal
     elif seg[0].y==seg[1].y:
-        return angulo=segHorizontal(origen,destino,seg)
+        return segHorizontal(origen,destino,seg)
     else:
         print("Error: segmento no es ni vertical no horizontal")
 
