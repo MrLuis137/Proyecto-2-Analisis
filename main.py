@@ -192,6 +192,33 @@ def generateReflectedRay(point, angle, sourceRay):
     #ray = Ray(intensity, point, Point(x, origin.y))
     return ray
 
+def segVertical(origen,destino,seg):
+    punto=Point(seg[0].x,origen.y)
+    hip=rt.length(destino,origen)
+    ca=rt.length(destino,punto)
+    if origen.y!=destino.y:
+        return math.acos(ca/hip)*180/math.pi
+    else:#Está en angulo de noventa.
+        return 90
+
+def segHorizontal(origen,destino,seg):
+    punto=Point(origen.x,seg[0].y)
+    hip=rt.length(destino,origen)
+    ca=rt.length(destino,punto)
+    if origen.x!=destino.x:
+        return math.acos(ca/hip)*180/math.pi   
+    else:#Está en angulo de noventa.
+        return 90
+
+def getAngle(origen,destino,seg):#Punto de donde sale el rayo, punto donde interseca y el segmento con el que choca
+    #Decidir si el segmentoes verical
+    if seg[0].x==seg[1].x:
+         return angulo=segVertical(origen,destino,seg)    
+    #Horizonatal
+    elif seg[0].y==seg[1].y:
+        return angulo=segHorizontal(origen,destino,seg)
+    else:
+        print("Error: segmento no es ni vertical no horizontal")
 
 
  #PINTA DIAGONALES
