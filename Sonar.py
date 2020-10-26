@@ -14,4 +14,3 @@ class Sonar:
     def  __init__(self, pos, dir ):
         self.pos = pos;
         self.dir = dir;
-        

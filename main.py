@@ -9,6 +9,7 @@ import rt
 import math
 import threading
 from sys import exit
+from Ray import *
 
 """ ------------------------CODIGO ORIGINAL DEL PROFE--------------------
 def raytrace():
@@ -62,90 +63,90 @@ def raytrace():
 #--------------------------------Raytrace--------------------------------
 #------------------------------------------------------------------------
 
-def raytrace(sonar):
+def raytrace(ray):
     #Raytraces the scene progessively
-    i = 0
-    while i < 1:
-        #random point in the image
-        point = Point(random.uniform(0, 500), random.uniform(0, 500))
-        #pixel color
-        pixel = 0
 
+    if(ray == None):
         #Obtiene la posición del sonar(por ahora está asignado al origen del rayo,
         #pero probablemente lo manejemos por aparte)
         source = sonar.pos
-        dir = point-source
-        #print(dir);
-        #print(source);
-        #print(point);
+        #random point in the image
+        point = Point(random.uniform(0, 550), random.uniform(0, 550));
+        point = Point(549, 200)
+        ray = Ray(1.0,source, point);
+    #point = maximizeDirection(source, pointTemp)
+    #pixel color
+    pixel = 0
 
-        #Ya pintar linea contiene el dibujar diagonal así se usa solo una funcion para dibujar cualquier linea
-        pintarLinea(source,point);
+    
+    dir = point-source
+    #print(source);
+    #print(point);
+
+    #Ya pintar linea contiene el dibujar diagonal así se usa solo una funcion para dibujar cualquier linea
+    pintarLinea(source,point);
+    
+    #Dibuja los puntos
+    #   Del punto:
+    px[int(point.x)][int(point.y)]=(255,0,255)
+    #   Del la posicion del sonar:
+    px[int(source.x)][int(source.y)]=(255,0,255)
+    
+    #add jitter
+    #dir.x += random.uniform(0, 25)
+    #dir.y += random.uniform(0, 25)
+
+    #distance between point and light source
+    length = rt.length(dir)
+    #normalized distance to source
+    length2 = rt.length(rt.normalize(dir))
+
+    free = True
+    intersectionPoint = Point(0,0);
+    for seg in segments:
+        #check if ray intersects with segment
+        #!!!!!!!!!!!!!!!!!!!!!
+        # A diferencia del codigo del código original, se calcula la dirección a
+        #partir del origen hasta un punto representado por dir
+        #!!!!!!!!!!!!!!!!!!!!!
+        dist = rt.raySegmentIntersect(source, dir, seg[0], seg[1])
+        #if intersection, or if intersection is closer than light source
+        if  dist > 0 and length2>dist:
+            free = False
+            intersectionPoint = rt.intersectionPoint(source, dir, dist);
+            break
+
+    if not free:
+        ##### Prueba para generar la reflexión
+        ry = generateReflectedRay(intersectionPoint, -35, ray);
+        pintarLinea(ry.dir , ry.origin);
+        #####
         
-        #Dibuja los puntos
-        #   Del punto:
-        px[int(point.x)][int(point.y)]=(255,0,255)
-        #   Del la posicion del sonar:
-        px[int(source.x)][int(source.y)]=(255,0,255)
+        #---------Pinta una cruz en el pinto de intersección---------------------
+        px[int(intersectionPoint.x)][int(intersectionPoint.y)] = (255,150,0);
+        px[int(intersectionPoint.x+1)][int(intersectionPoint.y)] = (255,150,0);
+        px[int(intersectionPoint.x-1)][int(intersectionPoint.y)] = (255,150,0);
+        px[int(intersectionPoint.x)][int(intersectionPoint.y-1)] = (255,150,0);
+        px[int(intersectionPoint.x)][int(intersectionPoint.y+1)] = (255,150,0);
+        #-------------------------------------------------------------------------
         
-        #add jitter
-        #dir.x += random.uniform(0, 25)
-        #dir.y += random.uniform(0, 25)
+        #!!!!!!!!!!!!!!!!
+        # Por ahora este código se puede quedar comentado puesto que trabaja sobre la imagen de fondo
+        # que estaba usando el profe, para nosotros no es necesario pero talvez nos sirva para tomar 
+        # ideas con lo de la intensidad
+        #!!!!!!!!!!!!!!!!
+        """intensity = (1-(length/500))**2
+        #print(len)
+        #intensity = max(0, min(intensity, 255))
+        values = (ref[int(point.y)][int(point.x)])[:3]
+        #combine color, light source and light color
+        values = values * intensity * light
 
-        #distance between point and light source
-        length = rt.length(dir)
-        #normalized distance to source
-        length2 = rt.length(rt.normalize(dir))
+        #add all light sources
+        pixel += values
 
-        free = True
-        intersectionPoint = Point(0,0);
-        for seg in segments:
-            #check if ray intersects with segment
-            #!!!!!!!!!!!!!!!!!!!!!
-            # A diferencia del codigo del código original, se calcula la dirección a
-            #partir del origen hasta un punto representado por dir
-            #!!!!!!!!!!!!!!!!!!!!!
-            dist = rt.raySegmentIntersect(source, dir, seg[0], seg[1])
-            #if intersection, or if intersection is closer than light source
-            if  dist > 0 and length2>dist:
-                free = False
-                #Se obtiene el punto de intesección
-                 #!!!!!!!!!!!!!!!!!!!!!
-                #BUGUEADO, NO SE SI EL CÓDIGO DEL PROFE ESTÁ MAL, O FUE QUE LO ENTENDÍ MAL.
-                #LA POSICIÓN EN X DE LA INTERSECCÓN ES CORRECTA, PERO SU POSICIÓN EN Y ESTÁ
-                #CORRIDA HACIA ABAJO Y NOS VA A AFECTAR A LA HORA DE CALCULAR LOS REBOTES.
-                 #!!!!!!!!!!!!!!!!!!!!!
-                intersectionPoint = rt.intersectionPoint(source, dir, dist);
-                break
-
-        if not free:
-            
-            #---------Pinta una cruz en el pinto de intersección---------------------
-            px[int(intersectionPoint.x)][int(intersectionPoint.y)] = (255,150,0);
-            px[int(intersectionPoint.x+1)][int(intersectionPoint.y)] = (255,150,0);
-            px[int(intersectionPoint.x-1)][int(intersectionPoint.y)] = (255,150,0);
-            px[int(intersectionPoint.x)][int(intersectionPoint.y-1)] = (255,150,0);
-            px[int(intersectionPoint.x)][int(intersectionPoint.y+1)] = (255,150,0);
-            #-------------------------------------------------------------------------
-            
-            #!!!!!!!!!!!!!!!!
-            # Por ahora este código se puede quedar comentado puesto que trabaja sobre la imagen de fondo
-            # que estaba usando el profe, para nosotros no es necesario pero talvez nos sirva para tomar 
-            # ideas con lo de la intensidad
-            #!!!!!!!!!!!!!!!!
-            """intensity = (1-(length/500))**2
-            #print(len)
-            #intensity = max(0, min(intensity, 255))
-            values = (ref[int(point.y)][int(point.x)])[:3]
-            #combine color, light source and light color
-            values = values * intensity * light
-
-            #add all light sources
-            pixel += values
-
-            #average pixel value and assign
-            px[int(point.x)][int(point.y)] = pixel // len(sources)"""
-        i= i+1
+        #average pixel value and assign
+        px[int(point.x)][int(point.y)] = pixel // len(sources)"""
     print("ended")
 
 
@@ -158,9 +159,120 @@ def getFrame():
     return pixels
 
 
+def generateReflectedRay(point, angle, sourceRay):
+    origin = sourceRay.origin;
+    m = (origin.y - point.y)/(origin.x - point.x)
+    b = point.y - (m * point.x)
+    #convierte de grados a radianes y obtiene la pendiente a partir del angulo
+    m += math.tan(angle*(math.pi/180))
+    y = m*origin.x + b
+    ####################################################
+    #FALTA AGREGAR EL CÓDIGO PARA CALCULAR LA PERDIDA DE ENERGÍA
+    ####################################################
+    dir = maximizeDirection(point, Point(origin.x, int(y)))
+    print(Point(origin.x, int(y)))
+    print(point)
+    intensity = sourceRay.intensity
+    ray = Ray(intensity, point, Point(origin.x, int(y)))
+    return ray
+
+
+
+ #PINTA DIAGONALES
+def pintarDiagonales(punto1,punto2):
+    colorSegm=(151, 210, 23)
+    m = (punto2.y - punto1.y)/(punto2.x - punto1.x);
+    #calcula el b
+    b = punto1.y - (m * punto1.x);
+    
+    if(int(punto1.x)<int(punto2.x)):
+        i = int(punto1.x);
+        end = int(punto2.x);
+    else:
+        end = int(punto1.x);
+        i = int(punto2.x);
+    #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
+    if(i<0):
+        i=0
+    #####
+    for x in range(i,end):
+        y = m*x + b;
+        #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
+        if(y < 0 or y >549 or x > 548):
+            continue
+        #####
+        px[int(x)][int(y)]=colorSegm;
+        x+=0.05;
+
+#Pinta la segmento entre esos 2 puntos
+def pintarLinea(punto1,punto2):
+    #Color de los segmentos
+    
+    colorSegm=(210, 23, 23);
+
+    #Cuando el valor de X es el mismo y cambia su posicion en Y (Segmento Vertical)
+    if punto1.x==punto2.x:
+        #Verifica cual punto es el que tiene menor valor en el eje Y
+        #Y cambia de color los pixeles del segmento
+        if punto1.y<punto2.y:
+            for i in range(punto1.y,punto2.y+1):
+                px[int(punto1.x)][int(i)]=colorSegm
+                #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
+                if(i == 549):
+                    break
+                #####
+        else:
+            for i in range(punto2.y,punto1.y+1):
+                px[int(punto1.x)][int(i)]=colorSegm
+                #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
+                if(i == 549):
+                    break
+                #####
+
+    #Cuando el valor de Y es el mismo y cambia su posicion en X (Segmento Horizontal)          
+    elif punto1.y==punto2.y:
+        #Verifica cual punto es el que tiene menor valor en el eje X
+        #Y cambia de color los pixeles del segmento
+        if punto1.x<punto2.x:
+            for e in range(punto1.x,punto2.x+1):
+                px[int(e)][int(punto2.y)]=colorSegm
+        else:
+            for e in range(punto2.x,punto1.x+1):
+                px[int(e)][int(punto2.y)]=colorSegm
+    else:
+        #Al no coincidir ninguno de los valores del par es una diagonal
+        pintarDiagonales(punto1,punto2)
+        
+#Pinta todos los segmentos
+def pintarSegmentos(segments):
+    #Para cada segmento envia los 2 puntos.
+    for segment in segments:
+        pintarLinea(segment[0],segment[1])
+    
+#Pone el punto de le dirección en los límites del espacio
+def maximizeDirection(origin, dir):
+    if(origin.x == dir.x):
+        if(origin.y< dir.y):
+            dir.y = 0;
+        else:
+            dir.y = h;
+    else:
+        m = (origin.y - dir.y)/(origin.x - dir.x);
+        #calcula el b
+        b = origin.y - (m * origin.x);
+        if(origin.x < dir.x):
+            dir.y = m*w-1 + b;
+            dir.x = w-1;
+            return dir;
+        else:
+            dir.y = m*0 + b;
+            dir.x = 0;
+            return dir;
+        
+
 #pygame stuff
 h,w=550,550
-border=50
+border=0
 pygame.init()
 screen = pygame.display.set_mode((w+(2*border), h+(2*border)))
 pygame.display.set_caption("2D Raytracing")
@@ -171,7 +283,7 @@ clock = pygame.time.Clock()
 random.seed()
 
 #image setup
-i = Image.new("RGB", (500, 500), (0, 0, 0) )
+i = Image.new("RGB", (550, 550), (0, 0, 0) )
 px = np.array(i)
 
 #reference image for background color
@@ -197,62 +309,6 @@ segments = [
             ([Point(320, 320), Point(360, 320)]),
             ([Point(180, 250), Point(180, 135)]),
             ]
-
-
-#PINTA DIAGONALES
-def pintarDiagonales(punto1,punto2):
-    colorSegm=(151, 210, 23)
-    m = (punto2.y - punto1.y)/(punto2.x - punto1.x);
-    #calcula el b
-    b = punto1.y - (m * punto1.x);
-    
-    if(int(punto1.x)<int(punto2.x)):
-        i = int(punto1.x);
-        end = int(punto2.x);
-    else:
-        end = int(punto1.x);
-        i = int(punto2.x);
-        
-    for x in range(i,end):
-        y = m*x + b;
-        px[int(x)][int(y)]=colorSegm;
-        x+=0.05;
-
-#Pinta la segmento entre esos 2 puntos
-def pintarLinea(punto1,punto2):
-    #Color de los segmentos
-    colorSegm=(210, 23, 23);
-
-    #Cuando el valor de X es el mismo y cambia su posicion en Y (Segmento Vertical)
-    if punto1.x==punto2.x:
-        #Verifica cual punto es el que tiene menor valor en el eje Y
-        #Y cambia de color los pixeles del segmento
-        if punto1.y<punto2.y:
-            for i in range(punto1.y,punto2.y+1):
-                px[int(punto1.x)][int(i)]=colorSegm
-        else:
-            for i in range(punto2.y,punto1.y+1):
-                px[int(punto1.x)][int(i)]=colorSegm
-
-    #Cuando el valor de Y es el mismo y cambia su posicion en X (Segmento Horizontal)          
-    elif punto1.y==punto2.y:
-        #Verifica cual punto es el que tiene menor valor en el eje X
-        #Y cambia de color los pixeles del segmento
-        if punto1.x<punto2.x:
-            for e in range(punto1.x,punto2.x+1):
-                px[int(e)][int(punto2.y)]=colorSegm
-        else:
-            for e in range(punto2.x,punto1.x+1):
-                px[int(e)][int(punto2.y)]=colorSegm
-    else:
-        #Al no coincidir ninguno de los valores del par es una diagonal
-        pintarDiagonales(punto1,punto2)
-        
-#Pinta todos los segmentos
-def pintarSegmentos(segments):
-    #Para cada segmento envia los 2 puntos.
-    for segment in segments:
-        pintarLinea(segment[0],segment[1])
         
 #Pinta los segmentos para ver donde choca.
 pintarSegmentos(segments)
@@ -270,7 +326,7 @@ pintarSegmentos(segments)
 #----------------------------Se crea el sonar--------------------------------
 sonar =  Sonar(Point(200,300), Point(22,100));
 #---------------------------------------------------------------------------
-raytrace(sonar);
+raytrace(None);
 while True:
         
         for event in pygame.event.get():
