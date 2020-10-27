@@ -118,7 +118,8 @@ def raytrace(ray):
 
     if not free:
         ##### Prueba para generar la reflexión
-        ry = generateReflectedRay(intersectionPoint, -90, ray);
+        ang=getAngle(source,intersectionPoint,seg)
+        ry = generateReflectedRay(intersectionPoint, ang, ray);
         pintarLinea(ry.dir , ry.origin);
         #####
         
@@ -213,10 +214,32 @@ def segHorizontal(origen,destino,seg):
 def getAngle(origen,destino,seg):#Punto de donde sale el rayo, punto donde interseca y el segmento con el que choca
     #Decidir si el segmentoes verical
     if seg[0].x==seg[1].x:
-         return segVertical(origen,destino,seg)    
+        ang=segVertical(origen,destino,seg)
+        ang=(90-ang)*2
+        if seg[0].x<origen.x:#Cuando el segmento está del lado izquierdo
+            if origen.y<destino.y:
+                return ang   
+            else:
+                return -ang    
+        else:#Cuando el segmento está del lado izquierdo
+            if origen.y<destino.y:
+                return -ang   
+            else:
+                return ang           
     #Horizonatal
     elif seg[0].y==seg[1].y:
-        return segHorizontal(origen,destino,seg)
+        ang=segHorizontal(origen,destino,seg)
+        ang=(90-ang)*2     
+        if seg[0].y<origen.y:#Cuando el segmento está arriba
+            if origen.x<destino.x:
+                return -ang   
+            else:
+                return ang    
+        else:#Cuando el segmento está del lado izquierdo
+            if origen.x<destino.x:
+                return ang   
+            else:
+                return -ang
     else:
         print("Error: segmento no es ni vertical no horizontal")
 
