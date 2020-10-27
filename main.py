@@ -65,19 +65,20 @@ def raytrace():
 
 def raytrace(ray):
     #Raytraces the scene progessively
-
     if(ray == None):
         #Obtiene la posición del sonar(por ahora está asignado al origen del rayo,
         #pero probablemente lo manejemos por aparte)
-        source = sonar.pos
-        #random point in the image
         point = Point(random.uniform(0, 550), random.uniform(0, 550));
-        point = Point(410, 250)
-        ray = Ray(1.0,source, point);
-    #point = maximizeDirection(source, pointTemp)
+        point = Point(100, 180)
+        ray = maximizeDirection(Ray(4.0,sonar.pos , point));
+    print(ray.intensity)
+    if(ray.intensity == 0):
+        return
     #pixel color
+    
     pixel = 0
-
+    source = ray.origin
+    point = ray.dir
     
     dir = point-source
     #print(source);
@@ -103,6 +104,8 @@ def raytrace(ray):
 
     free = True
     intersectionPoint = Point(0,0);
+    tempDist = 10000
+    segment = 0
     for seg in segments:
         #check if ray intersects with segment
         #!!!!!!!!!!!!!!!!!!!!!
@@ -113,12 +116,14 @@ def raytrace(ray):
         #if intersection, or if intersection is closer than light source
         if  dist > 0 and length2>dist:
             free = False
-            intersectionPoint = rt.intersectionPoint(source, dir, dist);
-            break
-
+            if(dist <tempDist):
+                tempDist = dist
+                segment = seg
+                intersectionPoint = rt.intersectionPoint(source, dir, dist);
+    
     if not free:
         ##### Prueba para generar la reflexión
-        ang=getAngle(source,intersectionPoint,seg)
+        ang=getAngle(source,intersectionPoint,segment)
         ry = generateReflectedRay(intersectionPoint, ang, ray);
         pintarLinea(ry.dir , ry.origin);
         #####
@@ -136,6 +141,8 @@ def raytrace(ray):
         # que estaba usando el profe, para nosotros no es necesario pero talvez nos sirva para tomar 
         # ideas con lo de la intensidad
         #!!!!!!!!!!!!!!!!
+        ry.intensity = ry.intensity -1
+        raytrace(ry);
         """intensity = (1-(length/500))**2
         #print(len)
         #intensity = max(0, min(intensity, 255))
@@ -190,8 +197,10 @@ def generateReflectedRay(point, angle, sourceRay):
     ####################################################
     intensity = sourceRay.intensity
     ray = Ray(intensity, Point(originX, originY), Point(xPrima, yPrima))
-    #ray = Ray(intensity, point, Point(x, origin.y))
+    ray = maximizeDirection(ray) 
     return ray
+
+
 
 def segVertical(origen,destino,seg):
     punto=Point(seg[0].x,origen.y)
@@ -316,7 +325,9 @@ def pintarSegmentos(segments):
         pintarLinea(segment[0],segment[1])
     
 #Pone el punto de le dirección en los límites del espacio
-def maximizeDirection(origin, dir):
+def maximizeDirection(ray):
+    origin = ray.origin
+    dir = ray.dir;
     if(origin.x == dir.x):
         if(origin.y< dir.y):
             dir.y = 0;
@@ -329,12 +340,12 @@ def maximizeDirection(origin, dir):
         if(origin.x < dir.x):
             dir.y = m*w-1 + b;
             dir.x = w-1;
-            return dir;
+            ray.dir = dir
         else:
             dir.y = m*0 + b;
             dir.x = 0;
-            return dir;
-        
+            ray.dir = dir
+    return ray;
 
 #pygame stuff
 h,w=550,550
@@ -390,7 +401,7 @@ pintarSegmentos(segments)
 #main loop
 
 #----------------------------Se crea el sonar--------------------------------
-sonar =  Sonar(Point(200,300), Point(22,100));
+sonar =  Sonar(Point(250,250), Point(20,100));
 #---------------------------------------------------------------------------
 raytrace(None);
 while True:
