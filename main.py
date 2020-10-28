@@ -70,8 +70,7 @@ def raytrace(ray):
         #pero probablemente lo manejemos por aparte)
         point = Point(random.uniform(0, 550), random.uniform(0, 550));
         point = Point(100, 180)
-        ray = maximizeDirection(Ray(4.0,sonar.pos , point));
-    print(ray.intensity)
+        ray = maximizeDirection(Ray(2.0,sonar.pos , point));
     if(ray.intensity == 0):
         return
     #pixel color
@@ -114,21 +113,28 @@ def raytrace(ray):
         #!!!!!!!!!!!!!!!!!!!!!
         dist = rt.raySegmentIntersect(source, dir, seg[0], seg[1])
         #if intersection, or if intersection is closer than light source
-        if  dist > 0 and length2>dist:
-            free = False
-            if(dist <tempDist):
+        tempInterPoint= rt.intersectionPoint(source, dir, dist);
+        if length2>dist and not source.x == tempInterPoint.x and not source.y == tempInterPoint.y:
+            if(dist <tempDist and dist > 0):
+                free = False
+                intersectionPoint = rt.intersectionPoint(source, dir, dist);
+                print(str(intersectionPoint.x) + " " + str(intersectionPoint.y) + " intersec temp")
                 tempDist = dist
                 segment = seg
-                intersectionPoint = rt.intersectionPoint(source, dir, dist);
+                
     
     if not free:
+        print(str(segment[0].x) + " " + str(segment[0].y) + "seg")
+        print(str(intersectionPoint.x) + " " + str(intersectionPoint.y) + "intersec")
+        print(str(ray.origin.x) + " " + str(ray.origin.y) + "Ray.org")
         ##### Prueba para generar la reflexión
         ang=getAngle(source,intersectionPoint,segment)
+        print (ang)
         ry = generateReflectedRay(intersectionPoint, ang, ray);
         pintarLinea(ry.dir , ry.origin);
         #####
         
-        #---------Pinta una cruz en el pinto de intersección---------------------
+        #---------Pinta una cruz en el punto de intersección---------------------
         px[int(intersectionPoint.x)][int(intersectionPoint.y)] = (0,255,255);
         px[int(intersectionPoint.x+1)][int(intersectionPoint.y)] = (0,255,255);
         px[int(intersectionPoint.x-1)][int(intersectionPoint.y)] = (0,255,255);
@@ -398,7 +404,7 @@ segments = [
             ([Point(180, 390), Point(180, 286)]),
             ([Point(180, 286), Point(140, 286)]),
             ([Point(320, 320), Point(360, 320)]),
-            ([Point(180, 250), Point(180, 135)]),
+            ([Point(200,249), Point(180, 135)]),
             ]
         
 #Pinta los segmentos para ver donde choca.
