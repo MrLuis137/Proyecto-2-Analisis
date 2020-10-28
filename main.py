@@ -129,11 +129,11 @@ def raytrace(ray):
         #####
         
         #---------Pinta una cruz en el pinto de intersección---------------------
-        px[int(intersectionPoint.x)][int(intersectionPoint.y)] = (255,150,0);
-        px[int(intersectionPoint.x+1)][int(intersectionPoint.y)] = (255,150,0);
-        px[int(intersectionPoint.x-1)][int(intersectionPoint.y)] = (255,150,0);
-        px[int(intersectionPoint.x)][int(intersectionPoint.y-1)] = (255,150,0);
-        px[int(intersectionPoint.x)][int(intersectionPoint.y+1)] = (255,150,0);
+        px[int(intersectionPoint.x)][int(intersectionPoint.y)] = (0,255,255);
+        px[int(intersectionPoint.x+1)][int(intersectionPoint.y)] = (0,255,255);
+        px[int(intersectionPoint.x-1)][int(intersectionPoint.y)] = (0,255,255);
+        px[int(intersectionPoint.x)][int(intersectionPoint.y-1)] = (0,255,255);
+        px[int(intersectionPoint.x)][int(intersectionPoint.y+1)] = (0,255,255);
         #-------------------------------------------------------------------------
         
         #!!!!!!!!!!!!!!!!
@@ -219,7 +219,19 @@ def segHorizontal(origen,destino,seg):
         return math.acos(ca/hip)*180/math.pi   
     else:#Está en angulo de noventa.
         return 90
-
+    
+def segDiagonal(origen,destino,seg):
+    if rt.length(seg[0]-origen)<rt.length(seg[1]-origen):
+        punto=seg[0]
+    else:
+        punto=seg[1]
+        
+    part1=origen.y*(destino.x-punto.x)+destino.y*(punto.x-origen.x)+punto.y*(origen.x-destino.x)    
+    part2=(origen.x-destino.x)*(destino.x-punto.x)+(origen.y-destino.y)*(destino.y-punto.y)
+    ang=math.atan(part1/part2) 
+    ang=ang*180/math.pi
+    return ang
+    
 def getAngle(origen,destino,seg):#Punto de donde sale el rayo, punto donde interseca y el segmento con el que choca
     #Decidir si el segmentoes verical
     if seg[0].x==seg[1].x:
@@ -250,7 +262,9 @@ def getAngle(origen,destino,seg):#Punto de donde sale el rayo, punto donde inter
             else:
                 return -ang
     else:
-        print("Error: segmento no es ni vertical no horizontal")
+        ang=segDiagonal(origen,destino,seg)
+        ang=(90-ang)*2
+        return ang
 
 
  #PINTA DIAGONALES
