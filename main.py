@@ -59,6 +59,7 @@ def raytrace():
             i= i+1
 ------------------------CODIGO ORIGINAL DEL PROFE--------------------"""
 
+#coeficiente de absorción
 
 #--------------------------------Raytrace--------------------------------
 #------------------------------------------------------------------------
@@ -69,9 +70,9 @@ def raytrace(ray):
         #Obtiene la posición del sonar(por ahora está asignado al origen del rayo,
         #pero probablemente lo manejemos por aparte)
         point = Point(random.uniform(0, 550), random.uniform(0, 550));
-        point = Point(100, 180)
-        ray = maximizeDirection(Ray(2.0,sonar.pos , point));
-    if(ray.intensity == 0):
+        point = Point(300, 155)
+        ray = maximizeDirection(Ray(255.0,sonar.pos , point));
+    if(ray.intensity < 1):
         return
     #pixel color
     
@@ -88,9 +89,9 @@ def raytrace(ray):
     
     #Dibuja los puntos
     #   Del punto:
-    px[int(point.x)][int(point.y)]=(255,0,255)
+    #px[int(point.x)][int(point.y)]=(255,0,255)
     #   Del la posicion del sonar:
-    px[int(source.x)][int(source.y)]=(255,0,255)
+    #px[int(source.x)][int(source.y)]=(255,0,255)
     
     #add jitter
     #dir.x += random.uniform(0, 25)
@@ -114,22 +115,19 @@ def raytrace(ray):
         dist = rt.raySegmentIntersect(source, dir, seg[0], seg[1])
         #if intersection, or if intersection is closer than light source
         tempInterPoint= rt.intersectionPoint(source, dir, dist);
-        if length2>dist and not source.x == tempInterPoint.x and not source.y == tempInterPoint.y:
+        if length2>dist and not (int(source.x) == int(tempInterPoint.x) 
+                                 and int(source.y) == int(tempInterPoint.y)):
             if(dist <tempDist and dist > 0):
                 free = False
                 intersectionPoint = rt.intersectionPoint(source, dir, dist);
-                print(str(intersectionPoint.x) + " " + str(intersectionPoint.y) + " intersec temp")
                 tempDist = dist
                 segment = seg
                 
     
     if not free:
-        print(str(segment[0].x) + " " + str(segment[0].y) + "seg")
-        print(str(intersectionPoint.x) + " " + str(intersectionPoint.y) + "intersec")
-        print(str(ray.origin.x) + " " + str(ray.origin.y) + "Ray.org")
         ##### Prueba para generar la reflexión
+        #print(intersectionPoint)
         ang=getAngle(source,intersectionPoint,segment)
-        print (ang)
         ry = generateReflectedRay(intersectionPoint, ang, ray);
         pintarLinea(ry.dir , ry.origin);
         #####
@@ -147,21 +145,20 @@ def raytrace(ray):
         # que estaba usando el profe, para nosotros no es necesario pero talvez nos sirva para tomar 
         # ideas con lo de la intensidad
         #!!!!!!!!!!!!!!!!
-        ry.intensity = ry.intensity -1
+        distance = rt.length(intersectionPoint)
+        ry.intensity = getIntensityLosseByDistance(ry.intensity, distance);
         raytrace(ry);
-        """intensity = (1-(length/500))**2
-        #print(len)
-        #intensity = max(0, min(intensity, 255))
-        values = (ref[int(point.y)][int(point.x)])[:3]
+        
+        #values = (ref[int(point.y)][int(point.x)])[:3]
         #combine color, light source and light color
-        values = values * intensity * light
+        #values = values * intensity * light
 
         #add all light sources
-        pixel += values
+        #pixel += values
 
         #average pixel value and assign
-        px[int(point.x)][int(point.y)] = pixel // len(sources)"""
-    print("ended")
+        #px[int(point.x)][int(point.y)] = pixel // len(sources)"""
+    #print("ended")
 
 
 #----------------------------Fin Raytrace--------------------------------
@@ -172,6 +169,10 @@ def getFrame():
     pixels = np.roll(px,(1,2),(0,1))
     return pixels
 
+def getIntensityLosseByDistance(intensity, distance):
+    newIntensity = intensity * pow(math.e , -beta*distance);
+    #print(str(newIntensity) + " " + str(distance)) 
+    return newIntensity;
 
 def generateReflectedRay(point, angle, sourceRay):
     origin = sourceRay.origin;
@@ -198,9 +199,6 @@ def generateReflectedRay(point, angle, sourceRay):
     originY = translationY
     xPrima += translationX
     yPrima += translationY
-    ####################################################
-    #FALTA AGREGAR EL CÓDIGO PARA CALCULAR LA PERDIDA DE ENERGÍA
-    ####################################################
     intensity = sourceRay.intensity
     ray = Ray(intensity, Point(originX, originY), Point(xPrima, yPrima))
     ray = maximizeDirection(ray) 
@@ -404,7 +402,7 @@ segments = [
             ([Point(180, 390), Point(180, 286)]),
             ([Point(180, 286), Point(140, 286)]),
             ([Point(320, 320), Point(360, 320)]),
-            ([Point(200,249), Point(180, 135)]),
+            ([Point(150,250), Point(180, 135)]),
             ]
         
 #Pinta los segmentos para ver donde choca.
@@ -420,10 +418,15 @@ pintarSegmentos(segments)
 
 #main loop
 
+#coeficiente de absorcion
+beta = 0.00137
 #----------------------------Se crea el sonar--------------------------------
-sonar =  Sonar(Point(250,250), Point(20,100));
+sonar =  Sonar(Point(190,150), Point(20,100));
 #---------------------------------------------------------------------------
-raytrace(None);
+t = threading.Thread(target = raytrace(None)) # f being the function that tells how the ball should move
+t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
+t.start()
+#raytrace(None);
 while True:
         
         for event in pygame.event.get():
