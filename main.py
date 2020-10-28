@@ -304,14 +304,14 @@ def pintarLinea(punto1,punto2):
         #Verifica cual punto es el que tiene menor valor en el eje Y
         #Y cambia de color los pixeles del segmento
         if punto1.y<punto2.y:
-            for i in range(punto1.y,punto2.y+1):
+            for i in range(int(punto1.y),int(punto2.y+1)):
                 px[int(punto1.x)][int(i)]=colorSegm
                 #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
                 if(i == 549):
                     break
                 #####
         else:
-            for i in range(punto2.y,punto1.y+1):
+            for i in range(int(punto2.y),int(punto1.y+1)):
                 px[int(punto1.x)][int(i)]=colorSegm
                 #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
                 if(i == 549):
@@ -323,10 +323,10 @@ def pintarLinea(punto1,punto2):
         #Verifica cual punto es el que tiene menor valor en el eje X
         #Y cambia de color los pixeles del segmento
         if punto1.x<punto2.x:
-            for e in range(punto1.x,punto2.x+1):
+            for e in range(int(punto1.x), int(punto2.x+1)):
                 px[int(e)][int(punto2.y)]=colorSegm
         else:
-            for e in range(punto2.x,punto1.x+1):
+            for e in range(int(punto2.x), int(punto1.x+1)):
                 px[int(e)][int(punto2.y)]=colorSegm
     else:
         #Al no coincidir ninguno de los valores del par es una diagonal
