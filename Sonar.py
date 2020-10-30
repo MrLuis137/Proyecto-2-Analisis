@@ -4,7 +4,8 @@ Created on Sat Oct 24 11:01:07 2020
 
 @author: lalem
 """
-from Point import *;
+import math
+from Point import *
 
 class Sonar:
     
@@ -14,3 +15,6 @@ class Sonar:
     def  __init__(self, pos, dir ):
         self.pos = pos;
         self.dir = dir;
+
+    def clone(self):
+        return Sonar(self.pos, self.dir);

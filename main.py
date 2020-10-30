@@ -64,13 +64,13 @@ def raytrace():
 #--------------------------------Raytrace--------------------------------
 #------------------------------------------------------------------------
 
-def raytrace(ray):
+def raytrace(ray, sonar):
     #Raytraces the scene progessively
     if(ray == None):
         #Obtiene la posición del sonar(por ahora está asignado al origen del rayo,
         #pero probablemente lo manejemos por aparte)
         point = Point(random.uniform(0, 550), random.uniform(0, 550));
-        point = Point(300, 155)
+        point = sonar.dir
         ray = maximizeDirection(Ray(255.0,sonar.pos , point));
     if(ray.intensity < 1):
         return
@@ -106,6 +106,10 @@ def raytrace(ray):
     intersectionPoint = Point(0,0);
     tempDist = 10000
     segment = 0
+    
+    #Comprobar que si el rayo choca con el sonar
+    
+    
     for seg in segments:
         #check if ray intersects with segment
         #!!!!!!!!!!!!!!!!!!!!!
@@ -129,6 +133,26 @@ def raytrace(ray):
         #print(intersectionPoint)
         ang=getAngle(source,intersectionPoint,segment)
         ry = generateReflectedRay(intersectionPoint, ang, ray);
+        eco = Ray(ray.intensity, intersectionPoint, sonar.pos);
+        
+        length = rt.length(dir)
+        length2 = rt.length(rt.normalize(dir))
+        tempDist = 10000
+        reachSonar = True;
+        for seg in segments:
+            d = rt.raySegmentIntersect(eco.origin, eco.dir, seg[0], seg[1])
+            #if intersection, or if intersection is closer than light source
+            tempInterPoint= rt.intersectionPoint(eco.origin, eco.dir, d);
+            
+            if length2>dist and not (int(eco.origin.x) == int(tempInterPoint.x) 
+                                     and int(eco.origin.y) == int(tempInterPoint.y)):
+                if(dist <tempDist and dist > 0):
+                    reachSonar = False
+                    tempDist = dist
+        if(reachSonar):
+            print("Hola, soy un eco :3")
+        
+        
         pintarLinea(ry.dir , ry.origin);
         #####
         
@@ -147,7 +171,7 @@ def raytrace(ray):
         #!!!!!!!!!!!!!!!!
         distance = rt.length(intersectionPoint)
         ry.intensity = getIntensityLosseByDistance(ry.intensity, distance);
-        raytrace(ry);
+        raytrace(ry, sonar);
         
         #values = (ref[int(point.y)][int(point.x)])[:3]
         #combine color, light source and light color
@@ -403,29 +427,25 @@ segments = [
             ([Point(180, 286), Point(140, 286)]),
             ([Point(320, 320), Point(360, 320)]),
             ([Point(150,250), Point(180, 135)]),
+            ([Point(160,250), Point(210, 250)])
             ]
         
 #Pinta los segmentos para ver donde choca.
 pintarSegmentos(segments)
 
 
-
-
-#thread setup
-#t = threading.Thread(target = raytrace) # f being the function that tells how the ball should move
-#t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
-#t.start()
-
 #main loop
 
 #coeficiente de absorcion
 beta = 0.00137
 #----------------------------Se crea el sonar--------------------------------
-sonar =  Sonar(Point(190,150), Point(20,100));
+sonar =  Sonar(Point(190,150), Point(270,195));
 #---------------------------------------------------------------------------
-t = threading.Thread(target = raytrace(None)) # f being the function that tells how the ball should move
+#"""
+t = threading.Thread(target = raytrace(None, sonar.clone())) # f being the function that tells how the ball should move
 t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
 t.start()
+#"""
 #raytrace(None);
 while True:
         
