@@ -151,14 +151,14 @@ def raytrace(ray, sonar):
                     tempDist = dist
 
         #print para conocer si atravieza o no la pared
-        print(isNotCrossingTheWall(intersectionPoint, eco, ry, segment))
-        #print para saber si hay alguna pared en medio
-        print (reachSonar)      
+   
         
         #Si no hay pared y no atravieza la pared
         if(reachSonar and isNotCrossingTheWall(intersectionPoint, eco, ry, segment)):
             #Se toma el eco como valido
-            pintarLinea(eco.dir , eco.origin);
+            
+            #DESCOMENTAR PARA VER ECOS
+            #pintarLinea(eco.dir , eco.origin); 
             print("Hola, soy un eco :3")
         
         
