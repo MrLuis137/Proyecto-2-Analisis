@@ -129,15 +129,7 @@ def raytrace(ray, sonar):
         ry = generateReflectedRay(intersectionPoint, ang, ray);
         #Genera el eco
         eco = Ray(ray.intensity, intersectionPoint, sonar.pos);
-        """
-        En esta parte se comprueba que el eco pueda llegar a el sonar, entonces se realiza el mismo procedimiento de
-        arriba donde comprobamos si toca a alguna pared. Por alguna razón que no entiendo, está roto y hace colisiones
-        con segmentos que nada que ver y con los que debería colisionar no los detecta.
-        """
-         
-        #####################################################
-        #PARTE QUE FALLA
-        #####################################################
+
         tempDist = 10000
         reachSonar = True;
         ecodir=eco.dir-eco.origin
@@ -157,10 +149,7 @@ def raytrace(ray, sonar):
                     reachSonar = False
                     #intersectionPoint = rt.intersectionPoint(source, dir, dist);
                     tempDist = dist
-        #####################################################
-        #PARTE QUE FALLA
-        #####################################################
-        
+
         #print para conocer si atravieza o no la pared
         print(isNotCrossingTheWall(intersectionPoint, eco, ry, segment))
         #print para saber si hay alguna pared en medio
@@ -242,13 +231,6 @@ def isNotCrossingTheWall(intersectionPoint, eco, ray, segment):
     y = eco.dir.y - translationY
     x = eco.dir.x - translationX
     ecoAngle  = getAngleOfPoint(x, y)
-    
-    #print(segAngle1)
-    #print(segAngle2)
-    #print(reflexAngle)
-    #print(eco.origin);
-    #print(eco.dir)
-    #print(ecoAngle)    
     
     #Si el angulo del reflejo es mayor que segAngle2
     #y el eco es mayor que el angulo segAngle2
@@ -482,9 +464,9 @@ def maximizeDirection(ray):
     dir = ray.dir;
     if(origin.x == dir.x):
         if(origin.y< dir.y):
-            dir.y = 0;
-        else:
             dir.y = h;
+        else:
+            dir.y = 0;
     else:
         m = (origin.y - dir.y)/(origin.x - dir.x);
         #calcula el b
@@ -527,12 +509,7 @@ px = np.array(i)
 #light = np.array([1, 1, 1])
 
 #warning, point order affects intersection test!!
-"""
-Mae, los segmentos estan ordenados para que sea un poco más fácil de debuguear.
-El asunto aquí es que está detectando colisiones con segmentos que no deberían,
-ya que ni siquiera está en la misma dirección.
-Y con otros directamente no detecta la colisión cuando el eco claramente pasa por encima.
-"""
+
 segments = [
             #Segmento inclinado
             ([Point(150,250), Point(180, 135)]),
@@ -560,8 +537,8 @@ pintarSegmentos(segments)
 #coeficiente de absorcion
 beta = 0.00137
 #----------------------------Se crea el sonar--------------------------------
-#sonar =  Sonar(Point(190,150), Point(270,195));
-sonar =  Sonar(Point(190,150), Point(100,165));
+#sonar =  Sonar(Point(190,150), Point(199,250));
+sonar =  Sonar(Point(190,150), Point(200,165));
 #---------------------------------------------------------------------------
 #"""
 t = threading.Thread(target = raytrace(None, sonar.clone())) # f being the function that tells how the ball should move
