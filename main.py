@@ -156,9 +156,9 @@ def raytrace(ray, sonar):
         pintarLinea(ry.dir , ry.origin);
         
         for aux in getAnglesSec(ang,2):
-            ry = generateReflectedRay(intersectionPoint, aux, ray)
+            ryS = generateReflectedRay(intersectionPoint, aux, ray)
             #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios
-            pintarLinea(ry.dir , ry.origin)            
+            pintarLinea(ryS.dir , ryS.origin)            
             
         #return#Descomentar para solo ver 1 rayo y sus secundarios
         #####
