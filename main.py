@@ -140,13 +140,15 @@ def raytrace(ray, sonar):
         #####################################################
         tempDist = 10000
         reachSonar = True;
-        length = rt.length(eco.dir)
-        length2 = rt.length(rt.normalize(eco.dir))
+        ecodir=eco.dir-eco.origin
+        
+        length = rt.length(ecodir)
+        length2 = rt.length(rt.normalize(ecodir))
         for seg in segments:
         #check if ray intersects with segment
-            dist = rt.raySegmentIntersect(eco.origin, eco.dir, seg[0], seg[1])
+            dist = rt.raySegmentIntersect(eco.origin, ecodir, seg[0], seg[1])
             #if intersection, or if intersection is closer than light source
-            tempInterPoint= rt.intersectionPoint(eco.origin, eco.dir, dist);
+            tempInterPoint= rt.intersectionPoint(eco.origin, ecodir, dist);
             #print(int(eco.origin.x) == int(tempInterPoint.x) )
             #print(int(eco.origin.y) == int(tempInterPoint.y))
             if length2>dist and not (int(eco.origin.x) == int(tempInterPoint.x) 
