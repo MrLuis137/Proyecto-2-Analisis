@@ -154,6 +154,13 @@ def raytrace(ray, sonar):
         
         
         pintarLinea(ry.dir , ry.origin);
+        
+        for aux in getAnglesSec(ang,2):
+            ry = generateReflectedRay(intersectionPoint, aux, ray)
+            #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios
+            pintarLinea(ry.dir , ry.origin)            
+            
+        #return#Descomentar para solo ver 1 rayo y sus secundarios
         #####
         
         #---------Pinta una cruz en el punto de intersección---------------------
@@ -228,6 +235,32 @@ def generateReflectedRay(point, angle, sourceRay):
     ray = maximizeDirection(ray) 
     return ray
 
+#Recibe el angulo de rotacion y la cantidad de segmentos secundarios que va a generar
+def getAnglesSec(angR,cant):
+    angulos=[]#angulos
+    ang=90-(angR/2)#Obtine el angulo en el que llega 
+    #Define los grandos +- que va a variar el los secundarios
+    grados=30
+    #Determina los rangos
+    rang1=grados
+    rang2=-grados
+    #calcula las diferencis o bordes
+    dif1=(ang+angR+rang1)
+    dif2=(ang+angR+rang2)
+    #Pregunta para ver si se salen de 180
+    if (dif1)>180:
+        rang1-=(dif1-180)
+        rang2+=(dif1-180)
+        #print("si 1")#Prueba si hay cambio en el primer if    
+    if (dif2)>180:
+        rang2-=(dif1-180)
+        rang1+=(dif1-180)
+        #print("si 2")#Prueba si hay cambio en el segundo if 
+    #Genera los ángulos en los que van a salir los secundarios    
+    while len(angulos)<cant:
+        angNew=random.uniform(angR+rang1,angR+rang2)
+        angulos.append(angNew)        
+    return angulos
 
 
 def segVertical(origen,destino,seg):
