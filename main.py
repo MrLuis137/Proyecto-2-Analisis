@@ -11,60 +11,14 @@ import threading
 from sys import exit
 from Ray import *
 
-""" ------------------------CODIGO ORIGINAL DEL PROFE--------------------
-def raytrace():
-    #Raytraces the scene progessively
-    while True :
-        #random point in the image
-        point = Point(random.uniform(0, 500), random.uniform(0, 500))
-        #pixel color
-        pixel = 0
-
-        for source in sources:
-            #calculates direction to light source
-
-            dir = source-point
-            pintarLinea(Point(250,250),point)
-            #add jitter
-            #dir.x += random.uniform(0, 25)
-            #dir.y += random.uniform(0, 25)
-
-            #distance between point and light source
-            length = rt.length(dir)
-            #normalized distance to source
-            length2 = rt.length(rt.normalize(dir))
-
-            free = True
-            for seg in segments:
-                #check if ray intersects with segment
-                dist = rt.raySegmentIntersect(point, dir, seg[0], seg[1])
-                #if intersection, or if intersection is closer than light source
-                if  dist > 0 and length2>dist:
-                    free = False
-                    break
-
-            if free:
-                intensity = (1-(length/500))**2
-                #print(len)
-                #intensity = max(0, min(intensity, 255))
-                values = (ref[int(point.y)][int(point.x)])[:3]
-                #combine color, light source and light color
-                values = values * intensity * light
-
-                #add all light sources
-                pixel += values
-
-            #average pixel value and assign
-            px[int(point.x)][int(point.y)] = pixel // len(sources)
-            i= i+1
-------------------------CODIGO ORIGINAL DEL PROFE--------------------"""
-
 #coeficiente de absorción
 
 #--------------------------------Raytrace--------------------------------
 #------------------------------------------------------------------------
 
-def raytrace(ray, sonar):
+# El angulo de escaneo corresponde al angulo en que se dirigió el primer rayo
+# donde 0 corresponde a la dirección del sonar.
+def raytrace(ray, sonar, depth, scanningAngle):
     #Raytraces the scene progessively
     if(ray == None):
         #Obtiene la posición del sonar(por ahora está asignado al origen del rayo,
@@ -73,11 +27,14 @@ def raytrace(ray, sonar):
         point = sonar.dir
         #ray = maximizeDirection(Ray(255.0,sonar.pos , point));
         ray = maximizeDirection(Ray(255.0,sonar.pos , point));
-    if(ray.intensity < 1):
+    #¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+    # Parametro que determina la profundidad de la recursión
+    # Setear un número muy alto puede llevar a una duración excesiva
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if(depth == 10 ):
         return
-    #pixel color
     
-    pixel = 0
+    
     source = ray.origin
     point = ray.dir
     
@@ -87,7 +44,7 @@ def raytrace(ray, sonar):
 
     #Ya pintar linea contiene el dibujar diagonal así se usa solo una funcion para dibujar cualquier linea
     
-    pintarLinea(source,point);
+    #pintarLinea(source,point);
     
     #Dibuja los puntos
     #   Del punto:
@@ -126,9 +83,13 @@ def raytrace(ray, sonar):
         ##### Prueba para generar la reflexión
         #print(intersectionPoint)
         ang=getAngle(source,intersectionPoint,segment)
+        ray.traveledDistance += calculateDistance(ray.origin, intersectionPoint)
+        #print(calculateDistance(ray.origin, intersectionPoint))
         ry = generateReflectedRay(intersectionPoint, ang, ray);
+        ry.traveledDistance += calculateDistance(ray.origin, intersectionPoint)
         #Genera el eco
         eco = Ray(ray.intensity, intersectionPoint, sonar.pos);
+        eco.traveledDistance = ry.traveledDistance
 
         tempDist = 10000
         reachSonar = True;
@@ -141,58 +102,60 @@ def raytrace(ray, sonar):
             dist = rt.raySegmentIntersect(eco.origin, ecodir, seg[0], seg[1])
             #if intersection, or if intersection is closer than light source
             tempInterPoint= rt.intersectionPoint(eco.origin, ecodir, dist);
-            #print(int(eco.origin.x) == int(tempInterPoint.x) )
-            #print(int(eco.origin.y) == int(tempInterPoint.y))
             if length2>dist and not (int(eco.origin.x) == int(tempInterPoint.x) 
                                      and int(eco.origin.y) == int(tempInterPoint.y)):
                 if(dist <tempDist and dist > 0):
                     reachSonar = False
                     #intersectionPoint = rt.intersectionPoint(source, dir, dist);
                     tempDist = dist
-
-        #print para conocer si atravieza o no la pared
-   
-        
+                    
         #Si no hay pared y no atravieza la pared
         if(reachSonar and isNotCrossingTheWall(intersectionPoint, eco, ry, segment)):
+            #obtiene la distancia recorrida total
+            dist = (ray.traveledDistance + calculateDistance(eco.origin, eco.dir))
+            #Obtioene la perdida de intensidad
+            intensity = getIntensityLosseByDistance(eco.intensity, dist)
+            pt= Point(sonar.pos.x + (dist /2), sonar.pos.y);
+            translationX = sonar.pos.x
+            translationY = sonar.pos.y
+            #Obtiene el angulo al que está viendo el sonar y le suma el angulo al cual fue
+            #dirigido el rayo original
+            ang = getAngleOfPoint(sonar.dir.x - translationX, sonar.dir.y - translationY) + scanningAngle
+            #se hace la rotación correspondiente
+            pt = rotatePoint(sonar.pos, pt,ang)
+            #si el punto a pintar no se sale de la escena
+            if(pt.x > 0 and pt.x < w and pt.y > 0 and pt.y < h):
+                #pinta el punto
+                px[int(pt.x)][int(pt.y)] = (intensity,intensity,intensity)
             #Se toma el eco como valido
             
             #DESCOMENTAR PARA VER ECOS
             #pintarLinea(eco.dir , eco.origin); 
-            print("Hola, soy un eco :3")
         
         
-        pintarLinea(ry.dir , ry.origin);
+        #- pintarLinea(ry.dir , ry.origin);
         
         for aux in getAnglesSec(ang,2):
             ryS = generateReflectedRay(intersectionPoint, aux, ray)
+            ryS.traveledDistance = ray.traveledDistance
+            raytrace(ryS, sonar,depth +1, scanningAngle )
             #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios
-            pintarLinea(ryS.dir , ryS.origin)            
+            #pintarLinea(ryS.dir , ryS.origin)            
             
+        px[int(sonar.pos.x)][int(sonar.pos.y)] = (0,255,255);
         #return#Descomentar para solo ver 1 rayo y sus secundarios
         #####
         #---------Pinta una cruz en el punto de intersección---------------------
-        px[int(intersectionPoint.x)][int(intersectionPoint.y)] = (0,255,255);
-        px[int(intersectionPoint.x+1)][int(intersectionPoint.y)] = (0,255,255);
-        px[int(intersectionPoint.x-1)][int(intersectionPoint.y)] = (0,255,255);
-        px[int(intersectionPoint.x)][int(intersectionPoint.y-1)] = (0,255,255);
-        px[int(intersectionPoint.x)][int(intersectionPoint.y+1)] = (0,255,255);
+        #px[int(intersectionPoint.x)][int(intersectionPoint.y)] = (0,255,255);
+        #px[int(intersectionPoint.x+1)][int(intersectionPoint.y)] = (0,255,255);
+        #px[int(intersectionPoint.x-1)][int(intersectionPoint.y)] = (0,255,255);
+        #px[int(intersectionPoint.x)][int(intersectionPoint.y-1)] = (0,255,255);
+        #px[int(intersectionPoint.x)][int(intersectionPoint.y+1)] = (0,255,255);
         #-------------------------------------------------------------------------
 
-        distance = rt.length(intersectionPoint)
-        ry.intensity = getIntensityLosseByDistance(ry.intensity, distance);
-        raytrace(ry, sonar);
+        ry.traveledDistance = ray.traveledDistance
+        raytrace(ry, sonar, depth + 1, scanningAngle);
         
-        #values = (ref[int(point.y)][int(point.x)])[:3]
-        #combine color, light source and light color
-        #values = values * intensity * light
-
-        #add all light sources
-        #pixel += values
-
-        #average pixel value and assign
-        #px[int(point.x)][int(point.y)] = pixel // len(sources)"""
-    #print("ended")
 
 
 
@@ -262,6 +225,9 @@ def isNotCrossingTheWall(intersectionPoint, eco, ray, segment):
             return True; 
     return False
     
+#---------------Obtener el angulo de un punto----------------------------
+#------------------------------------------------------------------------
+
 #Obtiene el angulo de un punto con respecto a 0 x,0 y 
 def getAngleOfPoint(x,y):
     #print(x,y)
@@ -288,45 +254,61 @@ def getAngleOfPoint(x,y):
 #-----------------------Fin Crossing the wall----------------------------
 #------------------------------------------------------------------------
 
+
+
 def getFrame():
     # grabs the current image and returns it
     pixels = np.roll(px,(1,2),(0,1))
     return pixels
 
+
+#---------------------------Perdida de energía---------------------------
+#------------------------------------------------------------------------
 def getIntensityLosseByDistance(intensity, distance):
     newIntensity = intensity * pow(math.e , -beta*distance);
     #print(str(newIntensity) + " " + str(distance)) 
     return newIntensity;
 
+#--------------------------Calcular Distancia----------------------
+#------------------------------------------------------------------------
+
+def calculateDistance(point1, point2):
+    c1 = abs(point1.x - point2.x)
+    c2 = abs(point1.y - point2.y)
+    return math.sqrt(c1**2 + c2**2) 
+
+#---------------------------Rayo reflejado---------------------------
+#------------------------------------------------------------------------
 def generateReflectedRay(point, angle, sourceRay):
     origin = sourceRay.origin;
-    #Pasa el angulo de grados a radianes
-    angle = angle*(math.pi/180)
-    #Obtiene el seno y el coseno del angulo 
-    cosAngle = math.cos(angle);
-    senAngle = math.sin(angle)
-    #traslada hace una traslación hacia el origen del plano cartesiano.
-    #El origen del rayo corresponde al origen del plano cartesiano con el fin de rotar el rayo a partir de ese punto
-    originX = 0;
-    originY = 0
-    translationX = point.x
-    translationY = point.y 
-    y = origin.y - translationY
-    x = origin.x - translationX
-    #Hace el calculo de X' y Y' utilizando la formula de rotación de ejes
-    xPrima = (x * cosAngle) - (y * senAngle)
-    yPrima = (y * cosAngle) + (x * senAngle)
-    #dir = maximizeDirection(point, Point(origin.x, int(y)))
-    
-    #Se devuelven ambos puntos a sus posiciónes
-    originX = translationX
-    originY = translationY
-    xPrima += translationX
-    yPrima += translationY
+
     intensity = sourceRay.intensity
-    ray = Ray(intensity, Point(originX, originY), Point(xPrima, yPrima))
+    #ray = Ray(intensity, Point(originX, originY), Point(xPrima, yPrima))
+    ray = Ray(intensity, Point(point.x, point.y), rotatePoint(point, origin , angle))
     ray = maximizeDirection(ray) 
     return ray
+
+
+#---------------------------Rotación del punto---------------------------
+#------------------------------------------------------------------------
+
+def rotatePoint(axisPoint, point, angle ):
+    #Pasa el angulo de grados a radianes
+    translationX = axisPoint.x
+    translationY = axisPoint.y 
+    y = point.y - translationY
+    x = point.x - translationX
+    angle = angle*(math.pi/180)
+    cosAngle = math.cos(angle);
+    senAngle = math.sin(angle)
+    xPrima = (x * cosAngle) - (y * senAngle)
+    yPrima = (y * cosAngle) + (x * senAngle)
+    xPrima += translationX
+    yPrima += translationY
+    return Point(xPrima, yPrima);
+
+#---------------------------getAngleSec---------------------------
+#------------------------------------------------------------------------
 
 #Recibe el angulo de rotacion y la cantidad de segmentos secundarios que va a generar
 def getAnglesSec(angR,cant):
@@ -385,6 +367,9 @@ def segDiagonal(origen,destino,seg):
     ang=math.atan(part1/part2) 
     ang=ang*180/math.pi
     return ang
+
+#---------------------------get Angle---------------------------------
+#------------------------------------------------------------------------
     
 def getAngle(origen,destino,seg):#Punto de donde sale el rayo, punto donde interseca y el segmento con el que choca
     #Decidir si el segmentoes verical
@@ -421,7 +406,8 @@ def getAngle(origen,destino,seg):#Punto de donde sale el rayo, punto donde inter
         return ang
 
 
- #PINTA DIAGONALES
+#---------------------------Pintar Diagonales---------------------------
+#------------------------------------------------------------------------
 def pintarDiagonales(punto1,punto2):
     colorSegm=(151, 210, 23)
     m = (punto2.y - punto1.y)/(punto2.x - punto1.x);
@@ -447,6 +433,9 @@ def pintarDiagonales(punto1,punto2):
         px[int(x)][int(y)]=colorSegm;
         x+=0.05;
 
+
+#---------------------------Pintar Linea---------------------------------
+#------------------------------------------------------------------------
 #Pinta la segmento entre esos 2 puntos
 def pintarLinea(punto1,punto2):
     #Color de los segmentos
@@ -485,12 +474,23 @@ def pintarLinea(punto1,punto2):
     else:
         #Al no coincidir ninguno de los valores del par es una diagonal
         pintarDiagonales(punto1,punto2)
+
+
+
+#---------------------------Pintar segmentos-----------------------------
+#------------------------------------------------------------------------
         
 #Pinta todos los segmentos
 def pintarSegmentos(segments):
     #Para cada segmento envia los 2 puntos.
     for segment in segments:
         pintarLinea(segment[0],segment[1])
+        
+
+
+
+#---------------------------Maximizar el rayo---------------------------
+#------------------------------------------------------------------------
     
 #Pone el punto de le dirección en los límites del espacio
 def maximizeDirection(ray):
@@ -514,6 +514,8 @@ def maximizeDirection(ray):
             dir.x = 0;
             ray.dir = dir
     return ray;
+#---------------------------Maximizar el rayo---------------------------
+#------------------------------------------------------------------------
 
 #pygame stuff
 h,w=550,550
@@ -571,11 +573,11 @@ pintarSegmentos(segments)
 #coeficiente de absorcion
 beta = 0.00137
 #----------------------------Se crea el sonar--------------------------------
-#sonar =  Sonar(Point(190,150), Point(199,250));
+#sonar =  Sonar(Point(190,150), Point(190,250));
 sonar =  Sonar(Point(190,150), Point(200,165));
 #---------------------------------------------------------------------------
 #"""
-t = threading.Thread(target = raytrace(None, sonar.clone())) # f being the function that tells how the ball should move
+t = threading.Thread(target = raytrace(None, sonar.clone(),0 ,0)) # f being the function that tells how the ball should move
 t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
 t.start()
 #"""
