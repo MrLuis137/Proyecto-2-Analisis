@@ -31,7 +31,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
     # Parametro que determina la profundidad de la recursión
     # Setear un número muy alto puede llevar a una duración excesiva
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(depth == 10 ):
+    if(depth == 4 ):
         return
     
     
@@ -120,9 +120,9 @@ def raytrace(ray, sonar, depth, scanningAngle):
             translationY = sonar.pos.y
             #Obtiene el angulo al que está viendo el sonar y le suma el angulo al cual fue
             #dirigido el rayo original
-            ang = getAngleOfPoint(sonar.dir.x - translationX, sonar.dir.y - translationY) + scanningAngle
+            angle = getAngleOfPoint(sonar.dir.x - translationX, sonar.dir.y - translationY) + scanningAngle
             #se hace la rotación correspondiente
-            pt = rotatePoint(sonar.pos, pt,ang)
+            pt = rotatePoint(sonar.pos, pt,angle)
             #si el punto a pintar no se sale de la escena
             if(pt.x > 0 and pt.x < w and pt.y > 0 and pt.y < h):
                 #pinta el punto
@@ -135,11 +135,12 @@ def raytrace(ray, sonar, depth, scanningAngle):
         
         #- pintarLinea(ry.dir , ry.origin);
         
-        for aux in getAnglesSec(ang,2):
+        for aux in getAnglesSec(ang,4):
             ryS = generateReflectedRay(intersectionPoint, aux, ray)
             ryS.traveledDistance = ray.traveledDistance
             raytrace(ryS, sonar,depth +1, scanningAngle )
             #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios
+            
             #pintarLinea(ryS.dir , ryS.origin)            
             
         px[int(sonar.pos.x)][int(sonar.pos.y)] = (0,255,255);
