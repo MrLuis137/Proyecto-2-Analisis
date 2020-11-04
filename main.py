@@ -32,7 +32,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
     # Parametro que determina la profundidad de la recursión
     # Setear un número muy alto puede llevar a una duración excesiva
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(depth == 3 ):
+    if(depth == 1 ):
         return
     
     
@@ -45,7 +45,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
 
     #Ya pintar linea contiene el dibujar diagonal así se usa solo una funcion para dibujar cualquier linea
     
-    #pintarLinea(source,point);
+    pintarLinea(source,point);
     
     #Dibuja los puntos
     #   Del punto:
@@ -142,7 +142,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
             raytrace(ryS, sonar,depth +1, scanningAngle )
             #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios
             
-            #pintarLinea(ryS.dir , ryS.origin)            
+            pintarLinea(ryS.dir , ryS.origin)            
             
         px[int(sonar.pos.x)][int(sonar.pos.y)] = (0,255,255);
         #return#Descomentar para solo ver 1 rayo y sus secundarios
@@ -247,7 +247,7 @@ def getAngleOfPoint(x,y):
     elif(x == 0 and y > 0):
         a = math.pi/2
     elif(x == 0 and y < 0):
-        a = 2 * math.pi
+        a = 3*(math.pi/2)
     elif(y == 0 and x > 0):
         a = 0
     elif(y == 0 and x < 0):
@@ -565,12 +565,9 @@ def drawSonar():
     p2 = Point(sonar.pos.x -15, sonar.pos.y);
     angle = getAngleOfPoint(sonar.dir.x - sonar.pos.x , sonar.dir.y- sonar.pos.y)
     print(angle)
-    print(p1)
-    print(p2)
     p1 = rotatePoint(centro, p1, angle + 20)
     p2 = rotatePoint(centro, p2, angle - 20)
-    print(p1)
-    print(p2)
+
     pintarLinea(centro, p2)
     pintarLinea(centro, p1)
      
