@@ -32,7 +32,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
     # Parametro que determina la profundidad de la recursión
     # Setear un número muy alto puede llevar a una duración excesiva
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(depth == 10 ):
+    if(depth == 3 ):
         return
     
     
@@ -473,7 +473,7 @@ def pintarDiagonales(punto1,punto2):
             continue
         #####
         px[int(x)][int(y)]=colorSegm;
-        x+=0.05;
+        x+=0.03;
 
 
 #---------------------------Pintar Linea---------------------------------
@@ -559,6 +559,21 @@ def maximizeDirection(ray):
 #---------------------------Maximizar el rayo---------------------------
 #------------------------------------------------------------------------
  
+def drawSonar():
+    centro = Point(sonar.pos.x, sonar.pos.y);
+    p1 = Point(sonar.pos.x - 15, sonar.pos.y);
+    p2 = Point(sonar.pos.x -15, sonar.pos.y);
+    angle = getAngleOfPoint(sonar.dir.x - sonar.pos.x , sonar.dir.y- sonar.pos.y)
+    print(angle)
+    print(p1)
+    print(p2)
+    p1 = rotatePoint(centro, p1, angle + 20)
+    p2 = rotatePoint(centro, p2, angle - 20)
+    print(p1)
+    print(p2)
+    pintarLinea(centro, p2)
+    pintarLinea(centro, p1)
+     
 
 #pygame stuff
 h,w=550,550
@@ -611,12 +626,12 @@ t = threading.Thread(target = raytrace(None, sonar.clone(),0 ,0)) # f being the 
 t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
 t.start()
 """
-print(sonar.dir)
 raytrace(None, sonar.clone(),0 ,0)
-print(sonar.dir)
+
 #raytrace(None);
 while True:
     for event in pygame.event.get():
+        drawSonar()
         mouseClick=pygame.mouse.get_pressed()
         if(mouseClick[0]==1):#Cuando da click izquierdo
             #Resetea el mapa
@@ -626,8 +641,7 @@ while True:
             posX, posY = pygame.mouse.get_pos()
             sonar.pos=Point(posX,posY)
             raytrace(None, sonar.clone(),0 ,0)
-            print(sonar.dir)
-            
+            drawSonar()
         elif (mouseClick[2]==1):#Cuando da click derecho
             #Resetea el mapa
             px = np.array(i)
@@ -636,7 +650,7 @@ while True:
             posX, posY = pygame.mouse.get_pos()
             sonar.dir=Point(posX,posY)
             raytrace(None, sonar.clone(),0 ,0)
-            
+            drawSonar()
         if event.type == pygame.QUIT:
             running = False
             pygame.quit()
