@@ -135,7 +135,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
         
         #- pintarLinea(source , ry.origin);
         
-        for aux in getAnglesSec(ang,4):
+        for aux in getAnglesSec(ang,2):
             ryS = generateReflectedRay(intersectionPoint, aux, ray)
             ryS.traveledDistance = ray.traveledDistance
             raytrace(ryS, sonar,depth +1, scanningAngle )
@@ -624,13 +624,23 @@ t.start()
 while True:
     for event in pygame.event.get():
         mouseClick=pygame.mouse.get_pressed()
-        if(mouseClick[0]==1):
+        if(mouseClick[0]==1):#Cuando da click izquierdo
             #Resetea el mapa
             px = np.array(i)
             pintarSegmentos(segments)
+            #Obtiene la posicion
             posX, posY = pygame.mouse.get_pos()
             sonar.pos=Point(posX,posY)
+            raytrace(None, sonar.clone(),0 ,0)
             #print(sonar.dir)
+            
+        elif (mouseClick[2]==1):#Cuando da click derecho
+            #Resetea el mapa
+            px = np.array(i)
+            pintarSegmentos(segments)
+            #Obtiene la posicion
+            posX, posY = pygame.mouse.get_pos()
+            sonar.dir=Point(posX,posY)
             raytrace(None, sonar.clone(),0 ,0)
             
         if event.type == pygame.QUIT:
