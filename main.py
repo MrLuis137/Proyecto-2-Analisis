@@ -328,12 +328,12 @@ def getAnglesSec(angR,cant):
     dif2=(ang+angR+rang2)
     #Pregunta para ver si se salen de 180
     if (dif1)>180:
-        rang1-=(dif1-180)
+        rang1-=(dif1+1-180)
         rang2+=(dif1-180)
         #print("si 1")#Prueba si hay cambio en el primer if    
     if (dif2)>180:
-        rang2-=(dif1-180)
-        rang1+=(dif1-180)
+        rang2-=(dif2+1-180)
+        rang1+=(dif2-180)
         #print("si 2")#Prueba si hay cambio en el segundo if 
     #Genera los ángulos en los que van a salir los secundarios    
     while len(angulos)<cant:
@@ -368,6 +368,8 @@ def segDiagonal(origen,destino,seg):
         
     part1=origen.y*(destino.x-punto.x)+destino.y*(punto.x-origen.x)+punto.y*(origen.x-destino.x)    
     part2=(origen.x-destino.x)*(destino.x-punto.x)+(origen.y-destino.y)*(destino.y-punto.y)
+    if part2==0:
+        part2=(origen.x-destino.x)*(destino.x-punto.x)+(origen.y+1-destino.y)*(destino.y+1-punto.y)
     ang=math.atan(part1/part2) 
     ang=ang*180/math.pi
     return ang
