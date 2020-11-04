@@ -31,7 +31,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
     # Parametro que determina la profundidad de la recursión
     # Setear un número muy alto puede llevar a una duración excesiva
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(depth == 4 ):
+    if(depth == 3 ):
         return
     
     
@@ -126,14 +126,14 @@ def raytrace(ray, sonar, depth, scanningAngle):
             #si el punto a pintar no se sale de la escena
             if(pt.x > 0 and pt.x < w and pt.y > 0 and pt.y < h):
                 #pinta el punto
-                px[int(pt.x)][int(pt.y)] = (intensity,intensity,intensity)
+                pintarPoint(int(pt.x),int(pt.y),(intensity,intensity,intensity))
             #Se toma el eco como valido
             
             #DESCOMENTAR PARA VER ECOS
             #pintarLinea(eco.dir , eco.origin); 
         
         
-        #- pintarLinea(ry.dir , ry.origin);
+        #- pintarLinea(source , ry.origin);
         
         for aux in getAnglesSec(ang,4):
             ryS = generateReflectedRay(intersectionPoint, aux, ray)
@@ -406,7 +406,45 @@ def getAngle(origen,destino,seg):#Punto de donde sale el rayo, punto donde inter
         ang=(90-ang)*2
         return ang
 
+#-------------------------------Pintar Punto----------------------------
+#-----------------------------------------------------------------------
+def pintarPoint(x,y,color):
+    colorCruz=colorArist=list(color)
+    #Se asegura de que la resta sea valida sino el color secundario es 0
+    if color[0]-20<0:
+        colorCruz[0]=colorCruz[1]=colorCruz[2]=0
+    else:
+        colorCruz[0]=colorCruz[1]=colorCruz[2]=color[0]-20     
+    if color[0]-40<0:
+        colorArist[0]=colorArist[1]=colorArist[2]=0
+    else:
+        colorArist[0]=colorArist[1]=colorArist[2]=color[0]-40
 
+    colorCruz=tuple(colorCruz)
+    colorArist=tuple(colorArist)    
+    #Pinta el pixel central
+    px[x][y] = color
+    #Los 4 if principales es para preguntar por la "cruz" a partir del pixel central
+    #Los if anidados es para las aristas
+    if x+1<h:    
+        px[x+1][y] = colorCruz
+        if y-1>0:
+            px[x+1][y-1] = colorArist
+        if y+1<h:
+            px[x+1][y+1] = colorArist
+    if x-1>0:
+        px[x-1][y] = colorCruz
+        if y-1>0:
+            px[x-1][y-1] = colorArist
+        if y+1<h:
+            px[x-1][y+1] = colorArist       
+    #Despues de hacer esos 2 ya se revisaron las 4 aristas
+    if y-1>0:
+        px[x][y-1] = colorCruz   
+    if y+1<h:
+        px[x][y+1] = colorCruz
+    
+    
 #---------------------------Pintar Diagonales---------------------------
 #------------------------------------------------------------------------
 def pintarDiagonales(punto1,punto2):
@@ -584,26 +622,30 @@ t.start()
 #"""
 #raytrace(None);
 while True:
-        
-        for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                    pygame.quit()
-                    exit()
-                    break
-                    
-
-        # Clear screen to white before drawing
-        screen.fill((255, 255, 255))
-        # Get a numpy array to display from the simulation
-        npimage=getFrame()
-
-        # Convert to a surface and splat onto screen offset by border width and height
-        surface = pygame.surfarray.make_surface(npimage)
-        screen.blit(surface, (border, border))
-        
-
-        pygame.display.flip()
-        clock.tick(60)
+    for event in pygame.event.get():
+        mouseClick=pygame.mouse.get_pressed()
+        if(mouseClick[0]==1):
+            #Resetea el mapa
+            px = np.array(i)
+            pintarSegmentos(segments)
+            posX, posY = pygame.mouse.get_pos()
+            sonar.pos=Point(posX,posY)
+            #print(sonar.dir)
+            raytrace(None, sonar.clone(),0 ,0)
+            
+        if event.type == pygame.QUIT:
+            running = False
+            pygame.quit()
+            exit()
+            break
+    # Clear screen to white before drawing
+    screen.fill((255, 255, 255))
+    # Get a numpy array to display from the simulation
+    npimage=getFrame()
+    # Convert to a surface and splat onto screen offset by border width and height
+    surface = pygame.surfarray.make_surface(npimage)
+    screen.blit(surface, (border, border))    
+    pygame.display.flip()
+    clock.tick(60)
 
 
