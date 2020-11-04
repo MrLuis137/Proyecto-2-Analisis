@@ -19,19 +19,20 @@ from Ray import *
 # El angulo de escaneo corresponde al angulo en que se dirigió el primer rayo
 # donde 0 corresponde a la dirección del sonar.
 def raytrace(ray, sonar, depth, scanningAngle):
+    #print(sonar.dir)
     #Raytraces the scene progessively
     if(ray == None):
         #Obtiene la posición del sonar(por ahora está asignado al origen del rayo,
         #pero probablemente lo manejemos por aparte)
         point = Point(random.uniform(0, 550), random.uniform(0, 550));
-        point = sonar.dir
+        point = Point(sonar.dir.x, sonar.dir.y)
         #ray = maximizeDirection(Ray(255.0,sonar.pos , point));
         ray = maximizeDirection(Ray(255.0,sonar.pos , point));
     #¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
     # Parametro que determina la profundidad de la recursión
     # Setear un número muy alto puede llevar a una duración excesiva
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(depth == 3 ):
+    if(depth == 10 ):
         return
     
     
@@ -155,6 +156,8 @@ def raytrace(ray, sonar, depth, scanningAngle):
         #-------------------------------------------------------------------------
 
         ry.traveledDistance = ray.traveledDistance
+        #print(sonar.dir)
+        #print()
         raytrace(ry, sonar, depth + 1, scanningAngle);
         
 
@@ -555,14 +558,14 @@ def maximizeDirection(ray):
     return ray;
 #---------------------------Maximizar el rayo---------------------------
 #------------------------------------------------------------------------
+ 
 
 #pygame stuff
 h,w=550,550
 border=0
 pygame.init()
 screen = pygame.display.set_mode((w+(2*border), h+(2*border)))
-pygame.display.set_caption("2D Raytracing")
-done = False
+pygame.display.set_caption("Sonar")
 clock = pygame.time.Clock()
 
 #init random
@@ -571,18 +574,6 @@ random.seed()
 #image setup
 i = Image.new("RGB", (550, 550), (0, 0, 0) )
 px = np.array(i)
-
-#reference image for background color
-#im_file = Image.open("fondo.png")
-#ref = np.array(im_file)
-
-#light positions
-#sources = [ Point(195, 200), Point( 294, 200) ]
-
-#light color
-#light = np.array([1, 1, 0.75])
-#light = np.array([1, 1, 1])
-
 #warning, point order affects intersection test!!
 
 segments = [
@@ -615,11 +606,14 @@ beta = 0.00137
 #sonar =  Sonar(Point(190,150), Point(190,250));
 sonar =  Sonar(Point(190,150), Point(200,165));
 #---------------------------------------------------------------------------
-#"""
+"""
 t = threading.Thread(target = raytrace(None, sonar.clone(),0 ,0)) # f being the function that tells how the ball should move
 t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
 t.start()
-#"""
+"""
+print(sonar.dir)
+raytrace(None, sonar.clone(),0 ,0)
+print(sonar.dir)
 #raytrace(None);
 while True:
     for event in pygame.event.get():
@@ -632,7 +626,7 @@ while True:
             posX, posY = pygame.mouse.get_pos()
             sonar.pos=Point(posX,posY)
             raytrace(None, sonar.clone(),0 ,0)
-            #print(sonar.dir)
+            print(sonar.dir)
             
         elif (mouseClick[2]==1):#Cuando da click derecho
             #Resetea el mapa
