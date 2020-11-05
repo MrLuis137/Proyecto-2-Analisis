@@ -5,7 +5,7 @@ import random
 from PIL import Image
 from Point import *
 from Sonar import *
-import rt
+import rt 
 import math
 import threading
 from sys import exit
@@ -32,7 +32,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
     # Parametro que determina la profundidad de la recursión
     # Setear un número muy alto puede llevar a una duración excesiva
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(depth == 1 ):
+    if(depth == 5 ):
         return
     
     
@@ -45,7 +45,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
 
     #Ya pintar linea contiene el dibujar diagonal así se usa solo una funcion para dibujar cualquier linea
     
-    pintarLinea(source,point);
+    #pintarLinea(source,point);
     
     #Dibuja los puntos
     #   Del punto:
@@ -76,6 +76,8 @@ def raytrace(ray, sonar, depth, scanningAngle):
             if(dist <tempDist and dist > 0):
                 free = False
                 intersectionPoint = rt.intersectionPoint(source, dir, dist);
+                intersectionPoint.x = round(intersectionPoint.x, 4)
+                intersectionPoint.y = round(intersectionPoint.y, 4)
                 tempDist = dist
                 segment = seg
                 
@@ -134,7 +136,8 @@ def raytrace(ray, sonar, depth, scanningAngle):
             #pintarLinea(eco.dir , eco.origin); 
         
         
-        #- pintarLinea(source , ry.origin);
+        #pintarLinea(source , ry.origin);
+        #pintarLinea(ry.dir , ry.origin);
         
         for aux in getAnglesSec(ang,2):
             ryS = generateReflectedRay(intersectionPoint, aux, ray)
@@ -142,7 +145,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
             raytrace(ryS, sonar,depth +1, scanningAngle )
             #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios
             
-            pintarLinea(ryS.dir , ryS.origin)            
+            #pintarLinea(ryS.dir , ryS.origin)            
             
         px[int(sonar.pos.x)][int(sonar.pos.y)] = (0,255,255);
         #return#Descomentar para solo ver 1 rayo y sus secundarios
@@ -450,6 +453,40 @@ def pintarPoint(x,y,color):
     
 #---------------------------Pintar Diagonales---------------------------
 #------------------------------------------------------------------------
+
+
+def pintarDiagonales(point1,point2):
+    colorSegm=(151, 210, 23)
+    size = int(calculateDistance(point1, point2));
+    start = 1
+    if(size > 1000):
+        size= 1000
+            
+    if(point2.x <point1.x):
+        temp = point1;
+        point1 = point2;
+        point2 = temp;
+    translationX = point1.x
+    translationY = point1.y 
+    y = point2.y - translationY
+    x = point2.x - translationX
+    angle = getAngleOfPoint(x, y);
+    points= []
+    if(not (int(point1.y) < 0 or int(point1.y) >h-1 or int(point1.x) < 0 or int(point1.x) > w-1)):
+        px[int(point1.x)][int(point1.y)]=colorSegm;
+    for i in range(start,size):
+        pt = Point(translationX + i,translationY);
+        ptOriented = rotatePoint(point1, pt, angle)
+        if((int(ptOriented.y) < 0 or int(ptOriented.y) >h -1 or int(ptOriented.x) < 0 or int(ptOriented.x) > w-1)):
+            continue
+        px[int(ptOriented.x)][int(ptOriented.y)]=colorSegm;
+
+#CODIGO ORIGINAL DE PINTAR DIAGONALES.
+#PUEDE RESULTAR MAS EFICIENTE AL PINTAR RAYOS, YA QUE POR LA MAXIMIZACIÓN
+#EL CODIGO NUEVO HACE MÁS CALCULOS DE LOS NECESARIOS.
+        
+        
+"""     
 def pintarDiagonales(punto1,punto2):
     colorSegm=(151, 210, 23)
     m = (punto2.y - punto1.y)/(punto2.x - punto1.x);
@@ -465,16 +502,44 @@ def pintarDiagonales(punto1,punto2):
     #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
     if(i<0):
         i=0
-    #####
+    #####+
+    lastY = m*i + b;
     for x in range(i,end):
         y = m*x + b;
         #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
         if(y < 0 or y >549 or x > 548):
             continue
         #####
+        
         px[int(x)][int(y)]=colorSegm;
-        x+=0.03;
-
+        diff = int(lastY - y)
+        tempY = int(y);
+        if(diff < 0):
+            half = diff/2
+            while(diff < 0):
+                tempY-=1
+                if(tempY < 0 or tempY >549):
+                    diff= 0
+                if(diff< half):
+                    px[int(x)][int(tempY)]=colorSegm;
+                if(diff> half):
+                    px[int(x - 1)][int(tempY)]=colorSegm;
+                diff+=1
+        elif(diff > 0):
+            half = diff/2
+            while(diff > 0):
+                tempY+=1
+                print(tempY)
+                if(tempY < 0 or tempY >549 or x == 549):
+                    diff= 0
+                    continue
+                if(diff< half):
+                    px[int(x)][int(tempY)]=colorSegm;
+                if(diff> half):
+                    px[int(x - 1)][int(tempY)]=colorSegm;
+                diff-=1
+        lastY= y
+"""
 
 #---------------------------Pintar Linea---------------------------------
 #------------------------------------------------------------------------
@@ -561,10 +626,9 @@ def maximizeDirection(ray):
  
 def drawSonar():
     centro = Point(sonar.pos.x, sonar.pos.y);
-    p1 = Point(sonar.pos.x - 15, sonar.pos.y);
+    p1 = Point(sonar.pos.x -15, sonar.pos.y);
     p2 = Point(sonar.pos.x -15, sonar.pos.y);
     angle = getAngleOfPoint(sonar.dir.x - sonar.pos.x , sonar.dir.y- sonar.pos.y)
-    print(angle)
     p1 = rotatePoint(centro, p1, angle + 20)
     p2 = rotatePoint(centro, p2, angle - 20)
 
