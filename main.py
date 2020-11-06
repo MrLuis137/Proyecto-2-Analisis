@@ -27,12 +27,15 @@ def raytrace(ray, sonar, depth, scanningAngle):
         point = Point(random.uniform(0, 550), random.uniform(0, 550));
         point = Point(sonar.dir.x, sonar.dir.y)
         #ray = maximizeDirection(Ray(255.0,sonar.pos , point));
-        ray = maximizeDirection(Ray(255.0,sonar.pos , point));
+        angle = getAngleOfPoint(sonar.dir.x - sonar.pos.x , sonar.dir.y- sonar.pos.y)
+        ray = Ray(255.0,sonar.pos , point);
+        ray.dir = rotatePoint(ray.origin, ray.dir, scanningAngle)
+        ray = maximizeDirection(ray);
     #¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
     # Parametro que determina la profundidad de la recursión
     # Setear un número muy alto puede llevar a una duración excesiva
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(depth == 5 ):
+    if(depth == 2):
         return
     
     
@@ -147,7 +150,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
             
             #pintarLinea(ryS.dir , ryS.origin)            
             
-        px[int(sonar.pos.x)][int(sonar.pos.y)] = (0,255,255);
+        #px[int(sonar.pos.x)][int(sonar.pos.y)] = (0,255,255);
         #return#Descomentar para solo ver 1 rayo y sus secundarios
         #####
         #---------Pinta una cruz en el punto de intersección---------------------
@@ -636,6 +639,11 @@ def drawSonar():
 
     pintarLinea(centro, p2)
     pintarLinea(centro, p1)
+    
+def scan():
+    dirAngle = getAngleOfPoint(sonar.dir.x - sonar.pos.x , sonar.dir.y- sonar.pos.y)
+    angle = random.uniform(- rangeOfVision, rangeOfVision)
+    raytrace(None, sonar, 0, angle)
      
 
 #pygame stuff
@@ -680,6 +688,8 @@ pintarSegmentos(segments)
 
 #coeficiente de absorcion
 beta = 0.00137
+ScanningRays = 200
+rangeOfVision = 30
 #----------------------------Se crea el sonar--------------------------------
 #sonar =  Sonar(Point(190,150), Point(190,250));
 sonar =  Sonar(Point(190,150), Point(200,165));
@@ -689,16 +699,19 @@ t = threading.Thread(target = raytrace(None, sonar.clone(),0 ,0)) # f being the 
 t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
 t.start()
 """
-raytrace(None, sonar.clone(),0 ,0)
+#raytrace(None, sonar.clone(),0 ,0)
 
 #raytrace(None);
 while True:
+    
     for event in pygame.event.get():
         drawSonar()
         mouseClick=pygame.mouse.get_pressed()
         if(mouseClick[0]==1):#Cuando da click izquierdo
             #Resetea el mapa
             px = np.array(i)
+            for j in range(0,ScanningRays):
+                scan()
             pintarSegmentos(segments)
             #Obtiene la posicion
             posX, posY = pygame.mouse.get_pos()
@@ -708,6 +721,8 @@ while True:
         elif (mouseClick[2]==1):#Cuando da click derecho
             #Resetea el mapa
             px = np.array(i)
+            for j in range(0,ScanningRays):
+                scan()
             pintarSegmentos(segments)
             #Obtiene la posicion
             posX, posY = pygame.mouse.get_pos()
