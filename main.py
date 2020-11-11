@@ -11,7 +11,16 @@ import threading
 from sys import exit
 from Ray import *
 
-#coeficiente de absorción
+beta = 0.00137 #coeficiente de absorción
+ScanningRays = 50 #cantidad de rayos a generar
+rangeOfVision = 30 #Rango de visión del sonar
+rangoSec=15#Rango
+#¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+# Parametro que determina la profundidad de la recursión
+# Setear un número muy alto puede llevar a una duración excesiva
+# o crasheos
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+maxDepth = 3
 
 #--------------------------------Raytrace--------------------------------
 #------------------------------------------------------------------------
@@ -32,8 +41,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
         ray.dir = rotatePoint(ray.origin, ray.dir, scanningAngle)
         ray = maximizeDirection(ray);
         """Rayos Secundarios de los Rayos Iniciales"""
-        rangoSec=15#Rango
-        cantSecP=0#Cantidad
+        cantSecP=2#Cantidad
         while cantSecP!=0:
             rangPS=scanningAngle
             newAnglePS=random.uniform(rangPS-rangoSec,rangPS+rangoSec)
@@ -45,11 +53,8 @@ def raytrace(ray, sonar, depth, scanningAngle):
                
             cantSecP-=1
         """----------------------------------------"""
-    #¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
-    # Parametro que determina la profundidad de la recursión
-    # Setear un número muy alto puede llevar a una duración excesiva
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if(depth == 2):
+
+    if(depth == maxDepth):
         return
     
     
@@ -128,13 +133,15 @@ def raytrace(ray, sonar, depth, scanningAngle):
                     reachSonar = False
                     #intersectionPoint = rt.intersectionPoint(source, dir, dist);
                     tempDist = dist
-                    
+        #print(isNotCrossingTheWall(intersectionPoint, eco, ry, segment))
         #Si no hay pared y no atravieza la pared
         if(reachSonar and isNotCrossingTheWall(intersectionPoint, eco, ry, segment)):
             #obtiene la distancia recorrida total
             dist = (ray.traveledDistance + calculateDistance(eco.origin, eco.dir))
             #Obtioene la perdida de intensidad
             intensity = getIntensityLosseByDistance(eco.intensity, dist)
+            if(intensity <= 0):
+                return
             pt= Point(sonar.pos.x + (dist /2), sonar.pos.y);
             translationX = sonar.pos.x
             translationY = sonar.pos.y
@@ -240,11 +247,11 @@ def isNotCrossingTheWall(intersectionPoint, eco, ray, segment):
             return True;
     
     #Casos especiales
-    if(reflexAngle > segAngle2 and reflexAngle > segAngle1):
+    if(reflexAngle > segAngle2):
          if(ecoAngle < segAngle2 or ecoAngle > segAngle1):
             return True;
     
-    if(reflexAngle < segAngle2 and reflexAngle < segAngle1):
+    if(reflexAngle < segAngle2):
          if(ecoAngle > segAngle2 or ecoAngle < segAngle1):
             return True; 
     return False
@@ -475,7 +482,7 @@ def pintarPoint(x,y,color):
 
 
 def pintarDiagonales(point1,point2):
-    colorSegm=(151, 210, 23)
+    colorSegm=(210, 23, 23)
     size = int(calculateDistance(point1, point2));
     start = 1
     if(size > 1000):
@@ -500,66 +507,6 @@ def pintarDiagonales(point1,point2):
             continue
         px[int(ptOriented.x)][int(ptOriented.y)]=colorSegm;
 
-#CODIGO ORIGINAL DE PINTAR DIAGONALES.
-#PUEDE RESULTAR MAS EFICIENTE AL PINTAR RAYOS, YA QUE POR LA MAXIMIZACIÓN
-#EL CODIGO NUEVO HACE MÁS CALCULOS DE LOS NECESARIOS.
-        
-        
-"""     
-def pintarDiagonales(punto1,punto2):
-    colorSegm=(151, 210, 23)
-    m = (punto2.y - punto1.y)/(punto2.x - punto1.x);
-    #calcula el b
-    b = punto1.y - (m * punto1.x);
-    
-    if(int(punto1.x)<int(punto2.x)):
-        i = int(punto1.x);
-        end = int(punto2.x);
-    else:
-        end = int(punto1.x);
-        i = int(punto2.x);
-    #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
-    if(i<0):
-        i=0
-    #####+
-    lastY = m*i + b;
-    for x in range(i,end):
-        y = m*x + b;
-        #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
-        if(y < 0 or y >549 or x > 548):
-            continue
-        #####
-        
-        px[int(x)][int(y)]=colorSegm;
-        diff = int(lastY - y)
-        tempY = int(y);
-        if(diff < 0):
-            half = diff/2
-            while(diff < 0):
-                tempY-=1
-                if(tempY < 0 or tempY >549):
-                    diff= 0
-                if(diff< half):
-                    px[int(x)][int(tempY)]=colorSegm;
-                if(diff> half):
-                    px[int(x - 1)][int(tempY)]=colorSegm;
-                diff+=1
-        elif(diff > 0):
-            half = diff/2
-            while(diff > 0):
-                tempY+=1
-                print(tempY)
-                if(tempY < 0 or tempY >549 or x == 549):
-                    diff= 0
-                    continue
-                if(diff< half):
-                    px[int(x)][int(tempY)]=colorSegm;
-                if(diff> half):
-                    px[int(x - 1)][int(tempY)]=colorSegm;
-                diff-=1
-        lastY= y
-"""
-
 #---------------------------Pintar Linea---------------------------------
 #------------------------------------------------------------------------
 #Pinta la segmento entre esos 2 puntos
@@ -576,14 +523,14 @@ def pintarLinea(punto1,punto2):
             for i in range(int(punto1.y),int(punto2.y+1)):
                 px[int(punto1.x)][int(i)]=colorSegm
                 #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
-                if(i == 549):
+                if(i == h):
                     break
                 #####
         else:
             for i in range(int(punto2.y),int(punto1.y+1)):
                 px[int(punto1.x)][int(i)]=colorSegm
                 #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
-                if(i == 549):
+                if(i == h):
                     break
                 #####
 
@@ -657,11 +604,15 @@ def drawSonar():
 def scan():
     dirAngle = getAngleOfPoint(sonar.dir.x - sonar.pos.x , sonar.dir.y- sonar.pos.y)
     angle = random.uniform(- rangeOfVision, rangeOfVision)
+    #t = threading.Thread(target = raytrace(None, sonar, 0, angle)) # f being the function that tells how the ball should move
+    #t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
+    #t.start()
+
     raytrace(None, sonar, 0, angle)
      
 
 #pygame stuff
-h,w=550,550
+h,w=768,1000
 border=0
 pygame.init()
 screen = pygame.display.set_mode((w+(2*border), h+(2*border)))
@@ -672,25 +623,52 @@ clock = pygame.time.Clock()
 random.seed()
 
 #image setup
-i = Image.new("RGB", (550, 550), (0, 0, 0) )
+i = Image.new("RGB", (h, w), (0, 0, 0) )
 px = np.array(i)
 #warning, point order affects intersection test!!
 
 segments = [
             #Segmento inclinado
-            ([Point(150,250), Point(180, 135)]),
-             #Segmento problemático 
-            ([Point(320, 135), Point(320, 280)]),
+  #acordeón 
+            ([Point(950,10), Point(900, 20)]),
+            ([Point(900,20), Point(950, 30)]),
+            ([Point(950,30), Point(900, 40)]),
+            ([Point(900,40), Point(950, 50)]),
+            ([Point(950,50), Point(900, 60)]),
+            ([Point(900,60), Point(950, 70)]),
+            ([Point(950,70), Point(900, 80)]),
+            ([Point(900,80), Point(950, 90)]),
+            ([Point(950,90), Point(900, 100)]),
+            ([Point(900,100), Point(950, 110)]),
+            ([Point(950,110), Point(900, 120)]),
+            ([Point(900,120), Point(950, 130)]),
+            ([Point(950,130), Point(900, 140)]),
+            ([Point(900,140), Point(950, 150)]),
+            ([Point(950,150), Point(900, 160)]),
+            ([Point(900,160), Point(950, 170)]),
+            ([Point(950,170), Point(900, 180)]),
+            ([Point(900,180), Point(950, 190)]),
             
-            ([Point(160,250), Point(210, 250)]),
-            ([Point(180, 135), Point(215, 135)]),
-            ([Point(285, 135), Point(320, 135)]),
-
-            ([Point(320, 320), Point(320, 355)]),
-            ([Point(320, 355), Point(215, 355)]),
-            ([Point(180, 390), Point(180, 286)]),
-            ([Point(180, 286), Point(140, 286)]),
-            ([Point(320, 320), Point(360, 320)]),
+            # Habitaciones
+            ([Point(47,49), Point(153, 49)]),
+            ([Point(153,49), Point(153, 111)]),
+            ([Point(153,111), Point(315, 111)]),
+            ([Point(315,111), Point(315, 200)]),
+            ([Point(315,200), Point(390, 200)]),
+            ([Point(315,111), Point(315, 200)]),
+            ([Point(390,200), Point(390, 65)]),
+            ([Point(360,65), Point(390, 65)]),
+            ([Point(360,65), Point(360, 45)]),
+            ([Point(360,45), Point(390, 45)]),
+            ([Point(390,45), Point(390, 25)]),
+            ([Point(390,25), Point(410, 25)]),
+            ([Point(410,25), Point(410, 65)]),
+            ([Point(410, 65), Point(550, 131)]),
+            ([Point(390,229), Point(550, 151)]),
+            ([Point(111,229), Point(390, 229)]),
+            ([Point(111,229), Point(111, 89)]),
+            ([Point(47,89), Point(111, 89)]),
+            
             
             ]
         
@@ -701,23 +679,21 @@ pintarSegmentos(segments)
 #main loop
 
 #coeficiente de absorcion
-beta = 0.00137
-ScanningRays = 200
-rangeOfVision = 30
+
 #----------------------------Se crea el sonar--------------------------------
 #sonar =  Sonar(Point(190,150), Point(190,250));
-sonar =  Sonar(Point(190,150), Point(200,165));
+sonar =  Sonar(Point(400,150), Point(200,165));
 #---------------------------------------------------------------------------
 """
 t = threading.Thread(target = raytrace(None, sonar.clone(),0 ,0)) # f being the function that tells how the ball should move
 t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
 t.start()
 """
+
 #raytrace(None, sonar.clone(),0 ,0)
 
 #raytrace(None);
 while True:
-    
     for event in pygame.event.get():
         drawSonar()
         mouseClick=pygame.mouse.get_pressed()
@@ -730,9 +706,11 @@ while True:
             #Crea el cono
             for j in range(0,ScanningRays):
                 scan()
+                #t = threading.Thread(target = scan())
+                #t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
+                #t.start()
             #Pinta nuevamente los segmentos
-            pintarSegmentos(segments)
-            raytrace(None, sonar.clone(),0 ,0)
+            #pintarSegmentos(segments)
             drawSonar()
         elif (mouseClick[2]==1):#Cuando da click derecho
             #Resetea el mapa
@@ -743,9 +721,11 @@ while True:
             #Crea el cono
             for j in range(0,ScanningRays):
                 scan()
+                #t = threading.Thread(target = scan())
+                #t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
+                #t.start()
             #Pinta los segmentos
-            pintarSegmentos(segments)
-            raytrace(None, sonar.clone(),0 ,0)
+            #pintarSegmentos(segments)
             drawSonar()
         if event.type == pygame.QUIT:
             running = False
