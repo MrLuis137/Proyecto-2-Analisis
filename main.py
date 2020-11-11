@@ -31,6 +31,20 @@ def raytrace(ray, sonar, depth, scanningAngle):
         ray = Ray(255.0,sonar.pos , point);
         ray.dir = rotatePoint(ray.origin, ray.dir, scanningAngle)
         ray = maximizeDirection(ray);
+        """Rayos Secundarios de los Rayos Iniciales"""
+        rangoSec=15#Rango
+        cantSecP=0#Cantidad
+        while cantSecP!=0:
+            rangPS=scanningAngle
+            newAnglePS=random.uniform(rangPS-rangoSec,rangPS+rangoSec)
+            
+            raySP = Ray(255.0,sonar.pos , point)
+            raySP.dir = rotatePoint(raySP.origin, raySP.dir, newAnglePS)
+            raySP = maximizeDirection(raySP)
+            raytrace(raySP, sonar, depth, scanningAngle)
+               
+            cantSecP-=1
+        """----------------------------------------"""
     #¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
     # Parametro que determina la profundidad de la recursión
     # Setear un número muy alto puede llevar a una duración excesiva
@@ -710,23 +724,27 @@ while True:
         if(mouseClick[0]==1):#Cuando da click izquierdo
             #Resetea el mapa
             px = np.array(i)
-            for j in range(0,ScanningRays):
-                scan()
-            pintarSegmentos(segments)
-            #Obtiene la posicion
+            #Obtiene la posicion y se asigna
             posX, posY = pygame.mouse.get_pos()
             sonar.pos=Point(posX,posY)
+            #Crea el cono
+            for j in range(0,ScanningRays):
+                scan()
+            #Pinta nuevamente los segmentos
+            pintarSegmentos(segments)
             raytrace(None, sonar.clone(),0 ,0)
             drawSonar()
         elif (mouseClick[2]==1):#Cuando da click derecho
             #Resetea el mapa
             px = np.array(i)
-            for j in range(0,ScanningRays):
-                scan()
-            pintarSegmentos(segments)
-            #Obtiene la posicion
+            #Obtiene la posicion de la dirección y la asigna 
             posX, posY = pygame.mouse.get_pos()
             sonar.dir=Point(posX,posY)
+            #Crea el cono
+            for j in range(0,ScanningRays):
+                scan()
+            #Pinta los segmentos
+            pintarSegmentos(segments)
             raytrace(None, sonar.clone(),0 ,0)
             drawSonar()
         if event.type == pygame.QUIT:
