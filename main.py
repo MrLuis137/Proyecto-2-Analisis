@@ -348,16 +348,19 @@ def getAnglesSec(angR,cant):
     dif2=(ang+angR+rang2)
     #Pregunta para ver si se salen de 180
     if (dif1)>180:
-        rang1-=(dif1+1-180)
+        rang1-=(dif1-180)
         rang2+=(dif1-180)
         #print("si 1")#Prueba si hay cambio en el primer if    
     if (dif2)>180:
-        rang2-=(dif2+1-180)
-        rang1+=(dif2-180)
-        #print("si 2")#Prueba si hay cambio en el segundo if 
+        rang2-=(dif2-180)
+        rang1+=(dif2-180)      
+
     #Genera los ángulos en los que van a salir los secundarios    
     while len(angulos)<cant:
         angNew=random.uniform(angR+rang1,angR+rang2)
+        if (angNew)<0:
+            if -angNew>ang:#Si el positivo es mayor pasa el segmento de lado
+                continue  
         angulos.append(angNew)        
     return angulos
 
