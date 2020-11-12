@@ -49,6 +49,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
             raySP = Ray(255.0,sonar.pos , point)
             raySP.dir = rotatePoint(raySP.origin, raySP.dir, newAnglePS)
             raySP = maximizeDirection(raySP)
+            raySP.intensity=intensityAngle(raySP.intensity, newAnglePS)
             raytrace(raySP, sonar, depth, scanningAngle)
                
             cantSecP-=1
@@ -166,6 +167,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
         for aux in getAnglesSec(ang,2):
             ryS = generateReflectedRay(intersectionPoint, aux, ray)
             ryS.traveledDistance = ray.traveledDistance
+            ryS.intensity=intensityAngle(ryS.intensity, aux)
             raytrace(ryS, sonar,depth +1, scanningAngle )
             #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios
             
@@ -299,6 +301,19 @@ def getIntensityLosseByDistance(intensity, distance):
     newIntensity = intensity * pow(math.e , -beta*distance);
     #print(str(newIntensity) + " " + str(distance)) 
     return newIntensity;
+
+#------------------Perdida de energía en base al angulo------------------
+#------------------------------------------------------------------------
+def intensityAngle(intensity, angleRotate):
+    angleOut=(90-angleRotate/2)+angleRotate
+    #print(angleOut)
+    if angleOut>180:
+        peso=math.cos(math.radians(abs(270-angleOut)))
+    else:
+        peso=math.cos(math.radians(abs(90-angleOut)))
+    return intensity*peso
+
+
 
 #--------------------------Calcular Distancia----------------------
 #------------------------------------------------------------------------
@@ -713,6 +728,7 @@ while True:
                 #t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
                 #t.start()
             #Pinta nuevamente los segmentos
+            #raytrace(None, sonar.clone(),0 ,0)#LLamada del rayo despues del mov
             #pintarSegmentos(segments)
             drawSonar()
         elif (mouseClick[2]==1):#Cuando da click derecho
@@ -728,6 +744,7 @@ while True:
                 #t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
                 #t.start()
             #Pinta los segmentos
+            #raytrace(None, sonar.clone(),0 ,0)#LLamada del rayo despues del mov
             #pintarSegmentos(segments)
             drawSonar()
         if event.type == pygame.QUIT:
