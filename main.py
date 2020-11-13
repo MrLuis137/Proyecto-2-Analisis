@@ -13,8 +13,8 @@ from Ray import *
 
 beta = 0.00137 #coeficiente de absorción
 ScanningRays = 50 #cantidad de rayos a generar
-rangeOfVision = 30 #Rango de visión del sonar
-rangoSec=15#Rango
+rangeOfVision = 45 #Rango de visión del sonar
+rangoSec=30#Rango
 #¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
 # Parametro que determina la profundidad de la recursión
 # Setear un número muy alto puede llevar a una duración excesiva
@@ -150,6 +150,8 @@ def raytrace(ray, sonar, depth, scanningAngle):
             #dirigido el rayo original
             angle = getAngleOfPoint(sonar.dir.x - translationX, sonar.dir.y - translationY) + scanningAngle
             #se hace la rotación correspondiente
+            intensity=intensityAngle(intensity, angle)
+            print(intensity)
             pt = rotatePoint(sonar.pos, pt,angle)
             #si el punto a pintar no se sale de la escena
             if(pt.x > 0 and pt.x < w and pt.y > 0 and pt.y < h):
@@ -687,6 +689,15 @@ segments = [
             ([Point(111,229), Point(111, 89)]),
             ([Point(47,89), Point(111, 89)]),
             
+            ([Point(153,424), Point(203,404)]),
+            ([Point(253,424), Point(203,404)]),
+            ([Point(253,424), Point(273, 474)]),
+            ([Point(273, 474), Point(253,524)]),
+            ([Point(253,524), Point(203,544)]),
+            ([Point(203,544), Point(153,524)]),
+            ([Point(153,524), Point(133,476)]),
+            ([Point(133,476), Point(153,424)]),
+            
             
             ]
         
@@ -713,6 +724,7 @@ t.start()
 #raytrace(None);
 while True:
     for event in pygame.event.get():
+        threads = []
         drawSonar()
         mouseClick=pygame.mouse.get_pressed()
         if(mouseClick[0]==1):#Cuando da click izquierdo
@@ -720,13 +732,14 @@ while True:
             px = np.array(i)
             #Obtiene la posicion y se asigna
             posX, posY = pygame.mouse.get_pos()
+            #print(str(posX) +" "  + str(posY))
             sonar.pos=Point(posX,posY)
             #Crea el cono
             for j in range(0,ScanningRays):
-                scan()
-                #t = threading.Thread(target = scan())
-                #t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
-                #t.start()
+                
+                t = threading.Thread(target = scan())
+                t.start()
+                threads.append(t)
             #Pinta nuevamente los segmentos
             #raytrace(None, sonar.clone(),0 ,0)#LLamada del rayo despues del mov
             #pintarSegmentos(segments)
@@ -739,10 +752,9 @@ while True:
             sonar.dir=Point(posX,posY)
             #Crea el cono
             for j in range(0,ScanningRays):
-                scan()
-                #t = threading.Thread(target = scan())
-                #t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
-                #t.start()
+                t = threading.Thread(target = scan())
+                t.start()
+                threads.append(t)
             #Pinta los segmentos
             #raytrace(None, sonar.clone(),0 ,0)#LLamada del rayo despues del mov
             #pintarSegmentos(segments)
@@ -752,6 +764,8 @@ while True:
             pygame.quit()
             exit()
             break
+        #for t in threads:
+            #t.join()
     # Clear screen to white before drawing
     screen.fill((255, 255, 255))
     # Get a numpy array to display from the simulation
