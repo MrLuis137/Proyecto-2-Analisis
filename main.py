@@ -45,7 +45,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
         while cantSecP!=0:
             rangPS=scanningAngle
             newAnglePS=random.uniform(rangPS-rangoSec,rangPS+rangoSec)
-            
+            #print(newAnglePS)
             raySP = Ray(255.0,sonar.pos , point)
             raySP.dir = rotatePoint(raySP.origin, raySP.dir, newAnglePS)
             raySP = maximizeDirection(raySP)
@@ -57,8 +57,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
 
     if(depth == maxDepth):
         return
-    
-    
+
     source = ray.origin
     point = ray.dir
     
@@ -68,18 +67,6 @@ def raytrace(ray, sonar, depth, scanningAngle):
 
     #Ya pintar linea contiene el dibujar diagonal así se usa solo una funcion para dibujar cualquier linea
     
-    #pintarLinea(source,point);
-    
-    #Dibuja los puntos
-    #   Del punto:
-    #px[int(point.x)][int(point.y)]=(255,0,255)
-    #   Del la posicion del sonar:
-    #px[int(source.x)][int(source.y)]=(255,0,255)
-    
-    #add jitter
-    #dir.x += random.uniform(0, 25)
-    #dir.y += random.uniform(0, 25)
-
     #distance between point and light source
     length = rt.length(dir)
     #normalized distance to source
@@ -104,7 +91,6 @@ def raytrace(ray, sonar, depth, scanningAngle):
                 tempDist = dist
                 segment = seg
                 
-    
     if not free:
         ##### Prueba para generar la reflexión
         #print(intersectionPoint)
@@ -114,68 +100,18 @@ def raytrace(ray, sonar, depth, scanningAngle):
         ry = generateReflectedRay(intersectionPoint, ang, ray);
         ry.traveledDistance += calculateDistance(ray.origin, intersectionPoint)
         #Genera el eco
-        eco = Ray(ray.intensity, intersectionPoint, sonar.pos);
-        eco.traveledDistance = ry.traveledDistance
-
-        tempDist = 10000
-        reachSonar = True;
-        ecodir=eco.dir-eco.origin
-        
-        length = rt.length(ecodir)
-        length2 = rt.length(rt.normalize(ecodir))
-        for seg in segments:
-        #check if ray intersects with segment
-            dist = rt.raySegmentIntersect(eco.origin, ecodir, seg[0], seg[1])
-            #if intersection, or if intersection is closer than light source
-            tempInterPoint= rt.intersectionPoint(eco.origin, ecodir, dist);
-            if length2>dist and not (int(eco.origin.x) == int(tempInterPoint.x) 
-                                     and int(eco.origin.y) == int(tempInterPoint.y)):
-                if(dist <tempDist and dist > 0):
-                    reachSonar = False
-                    #intersectionPoint = rt.intersectionPoint(source, dir, dist);
-                    tempDist = dist
-        #print(isNotCrossingTheWall(intersectionPoint, eco, ry, segment))
-        #Si no hay pared y no atravieza la pared
-        if(reachSonar and isNotCrossingTheWall(intersectionPoint, eco, ry, segment)):
-            #obtiene la distancia recorrida total
-            dist = (ray.traveledDistance + calculateDistance(eco.origin, eco.dir))
-            #Obtioene la perdida de intensidad
-            intensity = getIntensityLosseByDistance(eco.intensity, dist)
-            if(intensity <= 0):
-                return
-            pt= Point(sonar.pos.x + (dist /2), sonar.pos.y);
-            translationX = sonar.pos.x
-            translationY = sonar.pos.y
-            #Obtiene el angulo al que está viendo el sonar y le suma el angulo al cual fue
-            #dirigido el rayo original
-            angle = getAngleOfPoint(sonar.dir.x - translationX, sonar.dir.y - translationY) + scanningAngle
-            #se hace la rotación correspondiente
-            intensity=intensityAngle(intensity, angle)
-            print(intensity)
-            pt = rotatePoint(sonar.pos, pt,angle)
-            #si el punto a pintar no se sale de la escena
-            if(pt.x > 0 and pt.x < w and pt.y > 0 and pt.y < h):
-                #pinta el punto
-                pintarPoint(int(pt.x),int(pt.y),(intensity,intensity,intensity))
-            #Se toma el eco como valido
-            
-            #DESCOMENTAR PARA VER ECOS
-            #pintarLinea(eco.dir , eco.origin); 
-        
-        
+        calculateEco(ray, intersectionPoint,ry,segment,ang, scanningAngle)        
         #pintarLinea(source , ry.origin);
         #pintarLinea(ry.dir , ry.origin);
         
         for aux in getAnglesSec(ang,2):
             ryS = generateReflectedRay(intersectionPoint, aux, ray)
             ryS.traveledDistance = ray.traveledDistance
+            #print(aux)
             ryS.intensity=intensityAngle(ryS.intensity, aux)
             raytrace(ryS, sonar,depth +1, scanningAngle )
-            #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios
-            
+            #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios        
             #pintarLinea(ryS.dir , ryS.origin)            
-            
-        #px[int(sonar.pos.x)][int(sonar.pos.y)] = (0,255,255);
         #return#Descomentar para solo ver 1 rayo y sus secundarios
         #####
         #---------Pinta una cruz en el punto de intersección---------------------
@@ -190,14 +126,62 @@ def raytrace(ray, sonar, depth, scanningAngle):
         #print(sonar.dir)
         #print()
         raytrace(ry, sonar, depth + 1, scanningAngle);
-        
-
-
-
+    
 #----------------------------Fin Raytrace--------------------------------
 #------------------------------------------------------------------------
 
 
+def calculateEco(ray,intersectionPoint,ry,segment, ang, scanningAngle):
+    eco = Ray(ray.intensity, intersectionPoint, sonar.pos);
+    eco.traveledDistance = ry.traveledDistance
+
+    tempDist = 10000
+    reachSonar = True;
+    ecodir=eco.dir-eco.origin
+    
+    length = rt.length(ecodir)
+    length2 = rt.length(rt.normalize(ecodir))
+    for seg in segments:
+    #check if ray intersects with segment
+        dist = rt.raySegmentIntersect(eco.origin, ecodir, seg[0], seg[1])
+        #if intersection, or if intersection is closer than light source
+        tempInterPoint= rt.intersectionPoint(eco.origin, ecodir, dist);
+        if length2>dist and not (int(eco.origin.x) == int(tempInterPoint.x) 
+                                 and int(eco.origin.y) == int(tempInterPoint.y)):
+            if(dist <tempDist and dist > 0):
+                reachSonar = False
+                #intersectionPoint = rt.intersectionPoint(source, dir, dist);
+                tempDist = dist
+    #print(isNotCrossingTheWall(intersectionPoint, eco, ry, segment))
+    #Si no hay pared y no atravieza la pared
+    if(reachSonar and isNotCrossingTheWall(intersectionPoint, eco, ry, segment)):
+        #obtiene la distancia recorrida total
+        dist = (ray.traveledDistance + calculateDistance(eco.origin, eco.dir))
+        #Obtioene la perdida de intensidad
+        intensity = getIntensityLosseByDistance(eco.intensity, dist)
+        if(intensity <= 0):
+            return
+        pt= Point(sonar.pos.x + (dist /2), sonar.pos.y);
+        translationX = sonar.pos.x
+        translationY = sonar.pos.y
+        #Obtiene el angulo al que está viendo el sonar y le suma el angulo al cual fue
+        #dirigido el rayo original
+        angle = getAngleOfPoint(sonar.dir.x - translationX, sonar.dir.y - translationY) + scanningAngle
+        ang = getAngle(eco.dir,intersectionPoint,segment)
+        #ang = getAngleOfPoint(eco.dir.x - intersectionPoint.x, eco.dir.y - intersectionPoint.y) % 90
+        intensity=intensityAngle(intensity, ang)
+        #se hace la rotación correspondiente
+        pt = rotatePoint(sonar.pos, pt,angle)
+        #si el punto a pintar no se sale de la escena
+        if(pt.x > 0 and pt.x < w and pt.y > 0 and pt.y < h):
+            #pinta el punto
+            pintarPoint(int(pt.x),int(pt.y),(intensity,intensity,intensity))
+        #Se toma el eco como valido
+        
+        #DESCOMENTAR PARA VER ECOS
+        #pintarLinea(eco.dir , eco.origin); 
+        
+        
 #------------------------Crossing the wall-------------------------------
 #------------------------------------------------------------------------
 def isNotCrossingTheWall(intersectionPoint, eco, ray, segment):
@@ -624,10 +608,6 @@ def drawSonar():
 def scan():
     dirAngle = getAngleOfPoint(sonar.dir.x - sonar.pos.x , sonar.dir.y- sonar.pos.y)
     angle = random.uniform(- rangeOfVision, rangeOfVision)
-    #t = threading.Thread(target = raytrace(None, sonar, 0, angle)) # f being the function that tells how the ball should move
-    #t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
-    #t.start()
-
     raytrace(None, sonar, 0, angle)
      
 
