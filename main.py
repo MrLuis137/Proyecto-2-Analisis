@@ -8,11 +8,12 @@ from Sonar import *
 import rt 
 import math
 import threading
+from multiprocessing import Process, Queue
 from sys import exit
 from Ray import *
 
 beta = 0.00137 #coeficiente de absorción
-ScanningRays = 50 #cantidad de rayos a generar
+ScanningRays = 100 #cantidad de rayos a generar
 rangeOfVision = 45 #Rango de visión del sonar
 rangoSec=30#Rango
 #¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
@@ -49,7 +50,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
             raySP = Ray(255.0,sonar.pos , point)
             raySP.dir = rotatePoint(raySP.origin, raySP.dir, newAnglePS)
             raySP = maximizeDirection(raySP)
-            raySP.intensity=intensityAngle(raySP.intensity, newAnglePS)
+            #raySP.intensity=intensityAngle(raySP.intensity, newAnglePS)
             raytrace(raySP, sonar, depth, scanningAngle)
                
             cantSecP-=1
@@ -99,6 +100,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
         #print(calculateDistance(ray.origin, intersectionPoint))
         ry = generateReflectedRay(intersectionPoint, ang, ray);
         ry.traveledDistance += calculateDistance(ray.origin, intersectionPoint)
+        #ry.intensity = getIntensityLosseByDistance(ry.intensity, calculateDistance(ray.origin, intersectionPoint))
         #Genera el eco
         calculateEco(ray, intersectionPoint,ry,segment,ang, scanningAngle)        
         #pintarLinea(source , ry.origin);
@@ -108,6 +110,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
             ryS = generateReflectedRay(intersectionPoint, aux, ray)
             ryS.traveledDistance = ray.traveledDistance
             #print(aux)
+            #ryS.intensity = getIntensityLosseByDistance(ryS.intensity, calculateDistance(ray.origin, intersectionPoint))
             ryS.intensity=intensityAngle(ryS.intensity, aux)
             raytrace(ryS, sonar,depth +1, scanningAngle )
             #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios        
@@ -122,7 +125,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
         #px[int(intersectionPoint.x)][int(intersectionPoint.y+1)] = (0,255,255);
         #-------------------------------------------------------------------------
 
-        ry.traveledDistance = ray.traveledDistance
+        ry.traveledDistance += ray.traveledDistance
         #print(sonar.dir)
         #print()
         raytrace(ry, sonar, depth + 1, scanningAngle);
@@ -156,9 +159,15 @@ def calculateEco(ray,intersectionPoint,ry,segment, ang, scanningAngle):
     #Si no hay pared y no atravieza la pared
     if(reachSonar and isNotCrossingTheWall(intersectionPoint, eco, ry, segment)):
         #obtiene la distancia recorrida total
-        dist = (ray.traveledDistance + calculateDistance(eco.origin, eco.dir))
+        intensity=intensityAngle(eco.intensity, ang)
+        tempDist = (ray.traveledDistance + calculateDistance(eco.origin, eco.dir))
+        intensity = getIntensityLosseByDistance(eco.intensity, tempDist)
+        dist =  (math.log(intensity/255, math.e) / -beta)
+        #print(intensity)
         #Obtioene la perdida de intensidad
-        intensity = getIntensityLosseByDistance(eco.intensity, dist)
+        #intensity += 255 - intensity; 
+        #print(intensity)
+        
         if(intensity <= 0):
             return
         pt= Point(sonar.pos.x + (dist /2), sonar.pos.y);
@@ -169,7 +178,7 @@ def calculateEco(ray,intersectionPoint,ry,segment, ang, scanningAngle):
         angle = getAngleOfPoint(sonar.dir.x - translationX, sonar.dir.y - translationY) + scanningAngle
         ang = getAngle(eco.dir,intersectionPoint,segment)
         #ang = getAngleOfPoint(eco.dir.x - intersectionPoint.x, eco.dir.y - intersectionPoint.y) % 90
-        intensity=intensityAngle(intensity, ang)
+        
         #se hace la rotación correspondiente
         pt = rotatePoint(sonar.pos, pt,angle)
         #si el punto a pintar no se sale de la escena
@@ -704,9 +713,10 @@ t.start()
 #raytrace(None);
 while True:
     for event in pygame.event.get():
-        threads = []
+
         drawSonar()
         mouseClick=pygame.mouse.get_pressed()
+        processes = []
         if(mouseClick[0]==1):#Cuando da click izquierdo
             #Resetea el mapa
             px = np.array(i)
@@ -716,13 +726,11 @@ while True:
             sonar.pos=Point(posX,posY)
             #Crea el cono
             for j in range(0,ScanningRays):
-                
-                t = threading.Thread(target = scan())
-                t.start()
-                threads.append(t)
+                scan()
+                #threads.append(t)
             #Pinta nuevamente los segmentos
             #raytrace(None, sonar.clone(),0 ,0)#LLamada del rayo despues del mov
-            #pintarSegmentos(segments)
+            pintarSegmentos(segments)
             drawSonar()
         elif (mouseClick[2]==1):#Cuando da click derecho
             #Resetea el mapa
@@ -732,20 +740,17 @@ while True:
             sonar.dir=Point(posX,posY)
             #Crea el cono
             for j in range(0,ScanningRays):
-                t = threading.Thread(target = scan())
-                t.start()
-                threads.append(t)
+                scan()
             #Pinta los segmentos
             #raytrace(None, sonar.clone(),0 ,0)#LLamada del rayo despues del mov
-            #pintarSegmentos(segments)
+            pintarSegmentos(segments)
             drawSonar()
         if event.type == pygame.QUIT:
             running = False
             pygame.quit()
             exit()
             break
-        #for t in threads:
-            #t.join()
+       
     # Clear screen to white before drawing
     screen.fill((255, 255, 255))
     # Get a numpy array to display from the simulation
