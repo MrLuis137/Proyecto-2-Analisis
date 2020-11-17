@@ -17,7 +17,7 @@ import time
 beta = 0.00137 #coeficiente de absorción
 ScanningRays = 200 #cantidad de rayos a generar
 rangeOfVision = 45 #Rango de visión del sonar
-rangoSec=15#Rango
+rangoSec=5#Rango
 rayos = 0
 #¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
 # Parametro que determina la profundidad de la recursión
@@ -25,9 +25,6 @@ rayos = 0
 # o crasheos
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 maxDepth = 3
-
-
-choques = 0
 
 #--------------------------------Raytrace--------------------------------
 #------------------------------------------------------------------------
@@ -47,7 +44,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
         ray.dir = rotatePoint(ray.origin, ray.dir, scanningAngle)
         ray = maximizeDirection(ray);
         """Rayos Secundarios de los Rayos Iniciales"""
-        cantSecP=2#Cantidad
+        cantSecP=3#Cantidad
         while cantSecP!=0:
             rangPS=scanningAngle
             newAnglePS=random.uniform(rangPS-rangoSec,rangPS+rangoSec)
@@ -111,7 +108,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
         #pintarLinea(source , ry.origin);
         #pintarLinea(ry.dir , ry.origin);
         
-        for aux in getAnglesSec(ang,2):
+        for aux in getAnglesSec(ang,3):
             ryS = generateReflectedRay(intersectionPoint, aux, ray)
             ryS.traveledDistance = ray.traveledDistance
             #print(aux)
