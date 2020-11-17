@@ -15,30 +15,27 @@ from Ray import *
 import time
 
 beta = 0.00137 #coeficiente de absorción
-ScanningRays = 200 #cantidad de rayos a generar
-rangeOfVision = 45 #Rango de visión del sonar
-rangoSec=5#Rango
+ScanningRays = 125 #cantidad de rayos principales a generar
+rangeOfVision = 20 #Rango de visión del sonar
+rangoSec=5#Rango( subir para notar mejor cuando sea solo 1 rayo)
 rayos = 0
 #¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
 # Parametro que determina la profundidad de la recursión
 # Setear un número muy alto puede llevar a una duración excesiva
 # o crasheos
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-maxDepth = 3
+maxDepth = 1
 
 #--------------------------------Raytrace--------------------------------
 #------------------------------------------------------------------------
-
 # El angulo de escaneo corresponde al angulo en que se dirigió el primer rayo
 # donde 0 corresponde a la dirección del sonar.
 def raytrace(ray, sonar, depth, scanningAngle):
     #Raytraces the scene progessively
     global rayos
-    rayos +=1
-    if(ray == None):      
-        point = Point(random.uniform(0, 550), random.uniform(0, 550));
+    #rayos +=1
+    if(ray == None):
         point = Point(sonar.dir.x, sonar.dir.y)
-        #ray = maximizeDirection(Ray(255.0,sonar.pos , point));
         angle = getAngleOfPoint(sonar.dir.x - sonar.pos.x , sonar.dir.y- sonar.pos.y)
         ray = Ray(255.0,sonar.pos , point);
         ray.dir = rotatePoint(ray.origin, ray.dir, scanningAngle)
@@ -48,11 +45,11 @@ def raytrace(ray, sonar, depth, scanningAngle):
         while cantSecP!=0:
             rangPS=scanningAngle
             newAnglePS=random.uniform(rangPS-rangoSec,rangPS+rangoSec)
-            #print(newAnglePS)
+            
             raySP = Ray(255.0,sonar.pos , point)
             raySP.dir = rotatePoint(raySP.origin, raySP.dir, newAnglePS)
             raySP = maximizeDirection(raySP)
-            #raySP.intensity=intensityAngle(raySP.intensity, newAnglePS)
+            raySP.intensity=intensityAngle(raySP.intensity, newAnglePS)
             raytrace(raySP, sonar, depth, scanningAngle)
                
             cantSecP-=1
@@ -61,15 +58,13 @@ def raytrace(ray, sonar, depth, scanningAngle):
     if(depth == maxDepth):
         return
 
+    """Pinta todos los rayos aunque no choquen"""
+    #pintarLinea(ray.dir , ray.origin);
+    """---------------------------------------"""
     source = ray.origin
     point = ray.dir
-    
     dir = point-source
-    #print(source);
-    #print(point);
-
-    #Ya pintar linea contiene el dibujar diagonal así se usa solo una funcion para dibujar cualquier linea
-    
+       
     #distance between point and light source
     length = rt.length(dir)
     #normalized distance to source
@@ -96,39 +91,32 @@ def raytrace(ray, sonar, depth, scanningAngle):
                 
     if not free:
         ##### Prueba para generar la reflexión
-        #print(intersectionPoint)
         ang=getAngle(source,intersectionPoint,segment)
         ray.traveledDistance += calculateDistance(ray.origin, intersectionPoint)
-        #print(calculateDistance(ray.origin, intersectionPoint))
         ry = generateReflectedRay(intersectionPoint, ang, ray);
         ry.traveledDistance += calculateDistance(ray.origin, intersectionPoint)
-        #ry.intensity = getIntensityLosseByDistance(ry.intensity, calculateDistance(ray.origin, intersectionPoint))
         #Genera el eco
-        calculateEco(ray, intersectionPoint,ry,segment,ang, scanningAngle)        
+        calculateEco(ray, intersectionPoint,ry,segment,ang, scanningAngle)
+
+        """Pinta los rayos que si intersecan"""
         #pintarLinea(source , ry.origin);
-        #pintarLinea(ry.dir , ry.origin);
-        
+        """---------------------------------"""
+                
+         
         for aux in getAnglesSec(ang,3):
             ryS = generateReflectedRay(intersectionPoint, aux, ray)
             ryS.traveledDistance = ray.traveledDistance
-            #print(aux)
-            #ryS.intensity = getIntensityLosseByDistance(ryS.intensity, calculateDistance(ray.origin, intersectionPoint))
+
             ryS.intensity=intensityAngle(ryS.intensity, aux)
             raytrace(ryS, sonar,depth +1, scanningAngle )
-            #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios        
-            #pintarLinea(ryS.dir , ryS.origin)            
-        #return#Descomentar para solo ver 1 rayo y sus secundarios
      
         ry.traveledDistance += ray.traveledDistance
         ry.intensity=intensityAngle(ry.intensity, ang)
-        #print(sonar.dir)
-        #print()
+        
         raytrace(ry, sonar, depth + 1, scanningAngle);
     
 #----------------------------Fin Raytrace--------------------------------
 #------------------------------------------------------------------------
-
-
 def calculateEco(ray,intersectionPoint,ry,segment, ang, scanningAngle):
     eco = Ray(ray.intensity, intersectionPoint, sonar.pos);
     eco.traveledDistance = ry.traveledDistance
@@ -150,7 +138,7 @@ def calculateEco(ray,intersectionPoint,ry,segment, ang, scanningAngle):
                 reachSonar = False
                 #intersectionPoint = rt.intersectionPoint(source, dir, dist);
                 tempDist = dist
-    #print(isNotCrossingTheWall(intersectionPoint, eco, ry, segment))
+    
     #Si no hay pared y no atravieza la pared
     if(reachSonar and isNotCrossingTheWall(intersectionPoint, eco, ry, segment)):
         #obtiene la distancia recorrida total
@@ -158,10 +146,7 @@ def calculateEco(ray,intersectionPoint,ry,segment, ang, scanningAngle):
         tempDist = (ray.traveledDistance + calculateDistance(eco.origin, eco.dir))
         intensity = getIntensityLosseByDistance(eco.intensity, tempDist)
         dist =  (math.log(intensity/255, math.e) / -beta)
-        #print(intensity)
-        #Obtioene la perdida de intensidad
-        #intensity += 255 - intensity; 
-        #print(intensity)
+               
         
         if(intensity <= 0):
             return
@@ -172,7 +157,6 @@ def calculateEco(ray,intersectionPoint,ry,segment, ang, scanningAngle):
         #dirigido el rayo original
         angle = getAngleOfPoint(sonar.dir.x - translationX, sonar.dir.y - translationY) + scanningAngle
         ang = getAngle(eco.dir,intersectionPoint,segment)
-        #ang = getAngleOfPoint(eco.dir.x - intersectionPoint.x, eco.dir.y - intersectionPoint.y) % 90
         
         #se hace la rotación correspondiente
         pt = rotatePoint(sonar.pos, pt,angle)
@@ -181,9 +165,10 @@ def calculateEco(ray,intersectionPoint,ry,segment, ang, scanningAngle):
             #pinta el punto
             pintarPoint(int(pt.x),int(pt.y),(intensity,intensity,intensity))
         #Se toma el eco como valido
-        
-        #DESCOMENTAR PARA VER ECOS
-        #pintarLinea(eco.dir , eco.origin); 
+            
+        """DESCOMENTAR PARA VER ECOS"""
+        #pintarLinea(eco.dir , eco.origin);
+        """------------------------"""
         
         
 #------------------------Crossing the wall-------------------------------
@@ -215,7 +200,6 @@ def isNotCrossingTheWall(intersectionPoint, eco, ray, segment):
         segAngle1 = segAngle2
         segAngle2 = temp
         
-    
     #Obtiene el angulo de el reflejo con respecto a la intersección
     y = ray.dir.y - translationY
     x = ray.dir.y - translationX
@@ -252,8 +236,7 @@ def isNotCrossingTheWall(intersectionPoint, eco, ray, segment):
 #------------------------------------------------------------------------
 
 #Obtiene el angulo de un punto con respecto a 0 x,0 y 
-def getAngleOfPoint(x,y):
-    #print(x,y)
+def getAngleOfPoint(x,y): 
     a = 0
     if(x > 0 and y > 0):
         a = math.atan(y/x)
@@ -276,9 +259,6 @@ def getAngleOfPoint(x,y):
 
 #-----------------------Fin Crossing the wall----------------------------
 #------------------------------------------------------------------------
-
-
-
 def getFrame():
     # grabs the current image and returns it
     pixels = np.roll(px,(1,2),(0,1))
@@ -289,25 +269,20 @@ def getFrame():
 #------------------------------------------------------------------------
 def getIntensityLosseByDistance(intensity, distance):
     newIntensity = intensity * pow(math.e , -beta*distance);
-    #print(str(newIntensity) + " " + str(distance)) 
     return newIntensity;
-
 #------------------Perdida de energía en base al angulo------------------
 #------------------------------------------------------------------------
 def intensityAngle(intensity, angleRotate):
     angleOut=(90-angleRotate/2)+angleRotate
-    #print(angleOut)
+    
     if angleOut>180:
         peso=math.cos(math.radians(abs(270-angleOut)))
     else:
         peso=math.cos(math.radians(abs(90-angleOut)))
     return intensity*peso
 
-
-
 #--------------------------Calcular Distancia----------------------
 #------------------------------------------------------------------------
-
 def calculateDistance(point1, point2):
     c1 = abs(point1.x - point2.x)
     c2 = abs(point1.y - point2.y)
@@ -317,17 +292,14 @@ def calculateDistance(point1, point2):
 #------------------------------------------------------------------------
 def generateReflectedRay(point, angle, sourceRay):
     origin = sourceRay.origin;
-
     intensity = sourceRay.intensity
     #ray = Ray(intensity, Point(originX, originY), Point(xPrima, yPrima))
     ray = Ray(intensity, Point(point.x, point.y), rotatePoint(point, origin , angle))
     ray = maximizeDirection(ray) 
     return ray
 
-
 #---------------------------Rotación del punto---------------------------
 #------------------------------------------------------------------------
-
 def rotatePoint(axisPoint, point, angle ):
     #Pasa el angulo de grados a radianes
     translationX = axisPoint.x
@@ -345,13 +317,12 @@ def rotatePoint(axisPoint, point, angle ):
 
 #---------------------------getAngleSec---------------------------
 #------------------------------------------------------------------------
-
 #Recibe el angulo de rotacion y la cantidad de segmentos secundarios que va a generar
 def getAnglesSec(angR,cant):
     angulos=[]#angulos
     ang=90-(angR/2)#Obtine el angulo en el que llega 
     #Define los grandos +- que va a variar el los secundarios
-    grados=30
+    grados=15
     #Determina los rangos
     rang1=grados
     rang2=-grados
@@ -362,7 +333,7 @@ def getAnglesSec(angR,cant):
     if (dif1)>180:
         rang1-=(dif1-180)
         rang2+=(dif1-180)
-        #print("si 1")#Prueba si hay cambio en el primer if    
+        
     if (dif2)>180:
         rang2-=(dif2-180)
         rang1+=(dif2-180)      
@@ -410,8 +381,7 @@ def segDiagonal(origen,destino,seg):
     return ang
 
 #---------------------------get Angle---------------------------------
-#------------------------------------------------------------------------
-    
+#------------------------------------------------------------------------  
 def getAngle(origen,destino,seg):#Punto de donde sale el rayo, punto donde interseca y el segmento con el que choca
     #Decidir si el segmentoes verical
     if seg[0].x==seg[1].x:
@@ -483,8 +453,7 @@ def pintarPoint(x,y,color):
         px[x][y-1] = colorCruz   
     if y+1<h:
         px[x][y+1] = colorCruz
-    
-    
+       
 #---------------------------Pintar Diagonales---------------------------
 #------------------------------------------------------------------------
 
@@ -540,8 +509,6 @@ def pintarLinea(punto1,punto2):
                 #Solo es necesario para las dibujar los rayos. Se puede borrar una vez no se necesite
                 if(i == h):
                     break
-                #####
-
     #Cuando el valor de Y es el mismo y cambia su posicion en X (Segmento Horizontal)          
     elif punto1.y==punto2.y:
         #Verifica cual punto es el que tiene menor valor en el eje X
@@ -556,23 +523,16 @@ def pintarLinea(punto1,punto2):
         #Al no coincidir ninguno de los valores del par es una diagonal
         pintarDiagonales(punto1,punto2)
 
-
-
 #---------------------------Pintar segmentos-----------------------------
-#------------------------------------------------------------------------
-        
+#------------------------------------------------------------------------   
 #Pinta todos los segmentos
 def pintarSegmentos(segments):
     #Para cada segmento envia los 2 puntos.
     for segment in segments:
         pintarLinea(segment[0],segment[1])
-        
-
-
 
 #---------------------------Maximizar el rayo---------------------------
-#------------------------------------------------------------------------
-    
+#------------------------------------------------------------------------  
 #Pone el punto de le dirección en los límites del espacio
 def maximizeDirection(ray):
     origin = ray.origin
@@ -597,7 +557,6 @@ def maximizeDirection(ray):
     return ray;
 #---------------------------Maximizar el rayo---------------------------
 #------------------------------------------------------------------------
- 
 def drawSonar():
     centro = Point(sonar.pos.x, sonar.pos.y);
     p1 = Point(sonar.pos.x -15, sonar.pos.y);
@@ -614,9 +573,8 @@ def scan():
     angle = random.uniform(- rangeOfVision, rangeOfVision)
     raytrace(None, sonar, 0, angle)
      
-
 #pygame stuff
-h,w=768,1000
+h,w=700,1000
 border=0
 pygame.init()
 screen = pygame.display.set_mode((w+(2*border), h+(2*border)))
@@ -631,77 +589,38 @@ i = Image.new("RGB", (h, w), (0, 0, 0) )
 px = np.array(i)
 
 segments = [
-            #Segmento inclinado
-  #acordeón 
-            ([Point(950,10), Point(900, 20)]),
-            ([Point(900,20), Point(950, 30)]),
-            ([Point(950,30), Point(900, 40)]),
-            ([Point(900,40), Point(950, 50)]),
-            ([Point(950,50), Point(900, 60)]),
-            ([Point(900,60), Point(950, 70)]),
-            ([Point(950,70), Point(900, 80)]),
-            ([Point(900,80), Point(950, 90)]),
-            ([Point(950,90), Point(900, 100)]),
-            ([Point(900,100), Point(950, 110)]),
-            ([Point(950,110), Point(900, 120)]),
-            ([Point(900,120), Point(950, 130)]),
-            ([Point(950,130), Point(900, 140)]),
-            ([Point(900,140), Point(950, 150)]),
-            ([Point(950,150), Point(900, 160)]),
-            ([Point(900,160), Point(950, 170)]),
-            ([Point(950,170), Point(900, 180)]),
-            ([Point(900,180), Point(950, 190)]),
+            # acordeón 
+            ([Point(950,10), Point(900, 20)]),([Point(900,20), Point(950, 30)]),([Point(950,30), Point(900, 40)]),
+            ([Point(900,40), Point(950, 50)]),([Point(950,50), Point(900, 60)]),([Point(900,60), Point(950, 70)]),
+            ([Point(950,70), Point(900, 80)]),([Point(900,80), Point(950, 90)]),([Point(950,90), Point(900, 100)]),
+            ([Point(900,100), Point(950, 110)]),([Point(950,110), Point(900, 120)]),([Point(900,120), Point(950, 130)]),
+            ([Point(950,130), Point(900, 140)]),([Point(900,140), Point(950, 150)]),([Point(950,150), Point(900, 160)]),
+            ([Point(900,160), Point(950, 170)]),([Point(950,170), Point(900, 180)]),([Point(900,180), Point(950, 190)]),
             
             # Habitaciones
-            ([Point(47,49), Point(153, 49)]),
-            ([Point(153,49), Point(153, 111)]),
-            ([Point(153,111), Point(315, 111)]),
-            ([Point(315,111), Point(315, 200)]),
-            ([Point(315,200), Point(390, 200)]),
-            ([Point(315,111), Point(315, 200)]),
-            ([Point(390,200), Point(390, 65)]),
-            ([Point(360,65), Point(390, 65)]),
-            ([Point(360,65), Point(360, 45)]),
-            ([Point(360,45), Point(390, 45)]),
-            ([Point(390,45), Point(390, 25)]),
-            ([Point(390,25), Point(410, 25)]),
-            ([Point(410,25), Point(410, 65)]),
-            ([Point(410, 65), Point(550, 131)]),
-            ([Point(390,229), Point(550, 151)]),
-            ([Point(111,229), Point(390, 229)]),
-            ([Point(111,229), Point(111, 89)]),
-            ([Point(47,89), Point(111, 89)]),
+            ([Point(47,49), Point(153, 49)]),([Point(153,49), Point(153, 111)]),([Point(153,111), Point(315, 111)]),
+            ([Point(315,111), Point(315, 200)]),([Point(315,200), Point(390, 200)]),([Point(315,111), Point(315, 200)]),
+            ([Point(390,200), Point(390, 65)]),([Point(360,65), Point(390, 65)]),([Point(360,65), Point(360, 45)]),
+            ([Point(360,45), Point(390, 45)]),([Point(390,45), Point(390, 25)]),([Point(390,25), Point(410, 25)]),
+            ([Point(410,25), Point(410, 65)]),([Point(410, 65), Point(550, 131)]),([Point(390,229), Point(550, 151)]),
+            ([Point(111,229), Point(390, 229)]),([Point(111,229), Point(111, 89)]),([Point(47,89), Point(111, 89)]),
             
-            ([Point(153,424), Point(203,404)]),
-            ([Point(253,424), Point(203,404)]),
-            ([Point(253,424), Point(273, 474)]),
-            ([Point(273, 474), Point(253,524)]),
-            ([Point(253,524), Point(203,544)]),
-            ([Point(203,544), Point(153,524)]),
-            ([Point(153,524), Point(133,476)]),
-            ([Point(133,476), Point(153,424)]),
+            ([Point(153,424), Point(203,404)]),([Point(253,424), Point(203,404)]),([Point(253,424), Point(273, 474)]),
+            ([Point(273, 474), Point(253,524)]),([Point(253,524), Point(203,544)]),([Point(203,544), Point(153,524)]),
+            ([Point(153,524), Point(133,476)]),([Point(133,476), Point(153,424)]),
             
             #cono
-            ([Point(558,430), Point(604,624)]),
-            ([Point(650,430), Point(604,624)]),
+            ([Point(558,430), Point(604,624)]),([Point(650,430), Point(604,624)]),
             #tapa del cono
-            ([Point(650,430), Point(627,415)]),
-            ([Point(627,415), Point(604,410)]),
-            ([Point(604,410), Point(581,415)]),
-            ([Point(581,415), Point(558,430)]),
+            ([Point(650,430), Point(627,415)]),  ([Point(627,415), Point(604,410)]),
+            ([Point(604,410), Point(581,415)]),([Point(581,415), Point(558,430)]),
             
             #Cuadrado
-            ([Point(790,490), Point(890,490)]),
-            ([Point(790,490), Point(790,590)]),
-            ([Point(890,490), Point(890,590)]),
-            ([Point(790,590), Point(890,590)]),
-            ]
+            ([Point(790,490), Point(890,490)]),([Point(790,490), Point(790,590)]),([Point(890,490), Point(890,590)]),
+            ([Point(790,590), Point(890,590)]),]
         
-
-
-
 #----------------------------Se crea el sonar--------------------------------
-sonar =  Sonar(Point(400,150), Point(200,165));
+sonar =  Sonar(Point(400,300), Point(200,165));
 #---------------------------------------------------------------------------
 
 #Pinta los segmentos para ver donde choca.
@@ -718,17 +637,16 @@ while True:
             px = np.array(i)
             #Obtiene la posicion y se asigna
             posX, posY = pygame.mouse.get_pos()
-            #print(str(posX) +" "  + str(posY))
+            
             sonar.pos=Point(posX,posY)
             #Crea el cono
             rayos = 0
             start_time = time.time()
             for j in range(0,ScanningRays):
-                scan()
-                #threads.append(t)
-            #print("--- %s segundos ---" % (time.time() - start_time))
-            #Pinta nuevamente los segmentos
+                scan()            
+            """Pinta los segmentos"""
             #pintarSegmentos(segments)
+            """-------------------"""
             drawSonar()
         elif (mouseClick[2]==1):#Cuando da click derecho
             #Resetea el mapa
@@ -740,17 +658,17 @@ while True:
             rayos = 0
             start_time = time.time()
             for j in range(0,ScanningRays):
-                scan()
-            #print("--- %s segundos ---" % (time.time() - start_time))
-            #Pinta los segmentos
+                scan() 
+            """Pinta los segmentos"""
             #pintarSegmentos(segments)
+            """-------------------"""
             drawSonar()
         if event.type == pygame.QUIT:
             running = False
             pygame.quit()
             exit()
             break
-        #print(rayos)
+        
     # Clear screen to white before drawing
     screen.fill((255, 255, 255))
     # Get a numpy array to display from the simulation
@@ -760,5 +678,3 @@ while True:
     screen.blit(surface, (border, border))    
     pygame.display.flip()
     clock.tick(60)
-
-
