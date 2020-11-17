@@ -123,6 +123,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
         #return#Descomentar para solo ver 1 rayo y sus secundarios
      
         ry.traveledDistance += ray.traveledDistance
+        ry.intensity=intensityAngle(ry.intensity, ang)
         #print(sonar.dir)
         #print()
         raytrace(ry, sonar, depth + 1, scanningAngle);
