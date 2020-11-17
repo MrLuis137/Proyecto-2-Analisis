@@ -126,6 +126,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
         #-------------------------------------------------------------------------
 
         ry.traveledDistance += ray.traveledDistance
+        ry.intensity=intensityAngle(ry.intensity, ang)
         #print(sonar.dir)
         #print()
         raytrace(ry, sonar, depth + 1, scanningAngle);
