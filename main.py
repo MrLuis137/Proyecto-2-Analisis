@@ -12,10 +12,13 @@ from multiprocessing import Process, Queue
 from sys import exit
 from Ray import *
 
+import time
+
 beta = 0.00137 #coeficiente de absorción
-ScanningRays = 100 #cantidad de rayos a generar
+ScanningRays = 200 #cantidad de rayos a generar
 rangeOfVision = 45 #Rango de visión del sonar
-rangoSec=30#Rango
+rangoSec=15#Rango
+rayos = 0
 #¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
 # Parametro que determina la profundidad de la recursión
 # Setear un número muy alto puede llevar a una duración excesiva
@@ -23,17 +26,19 @@ rangoSec=30#Rango
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 maxDepth = 3
 
+
+choques = 0
+
 #--------------------------------Raytrace--------------------------------
 #------------------------------------------------------------------------
 
 # El angulo de escaneo corresponde al angulo en que se dirigió el primer rayo
 # donde 0 corresponde a la dirección del sonar.
 def raytrace(ray, sonar, depth, scanningAngle):
-    #print(sonar.dir)
     #Raytraces the scene progessively
-    if(ray == None):
-        #Obtiene la posición del sonar(por ahora está asignado al origen del rayo,
-        #pero probablemente lo manejemos por aparte)
+    global rayos
+    rayos +=1
+    if(ray == None):      
         point = Point(random.uniform(0, 550), random.uniform(0, 550));
         point = Point(sonar.dir.x, sonar.dir.y)
         #ray = maximizeDirection(Ray(255.0,sonar.pos , point));
@@ -116,15 +121,7 @@ def raytrace(ray, sonar, depth, scanningAngle):
             #print("Rota:",aux,"Sale:",(90-aux/2)+aux,"Diferencia:",ang-aux)#Prubeas para ver el comportamiento de los ang secundarios        
             #pintarLinea(ryS.dir , ryS.origin)            
         #return#Descomentar para solo ver 1 rayo y sus secundarios
-        #####
-        #---------Pinta una cruz en el punto de intersección---------------------
-        #px[int(intersectionPoint.x)][int(intersectionPoint.y)] = (0,255,255);
-        #px[int(intersectionPoint.x+1)][int(intersectionPoint.y)] = (0,255,255);
-        #px[int(intersectionPoint.x-1)][int(intersectionPoint.y)] = (0,255,255);
-        #px[int(intersectionPoint.x)][int(intersectionPoint.y-1)] = (0,255,255);
-        #px[int(intersectionPoint.x)][int(intersectionPoint.y+1)] = (0,255,255);
-        #-------------------------------------------------------------------------
-
+     
         ry.traveledDistance += ray.traveledDistance
         #print(sonar.dir)
         #print()
@@ -634,7 +631,6 @@ random.seed()
 #image setup
 i = Image.new("RGB", (h, w), (0, 0, 0) )
 px = np.array(i)
-#warning, point order affects intersection test!!
 
 segments = [
             #Segmento inclinado
@@ -687,30 +683,32 @@ segments = [
             ([Point(153,524), Point(133,476)]),
             ([Point(133,476), Point(153,424)]),
             
+            #cono
+            ([Point(558,430), Point(604,624)]),
+            ([Point(650,430), Point(604,624)]),
+            #tapa del cono
+            ([Point(650,430), Point(627,415)]),
+            ([Point(627,415), Point(604,410)]),
+            ([Point(604,410), Point(581,415)]),
+            ([Point(581,415), Point(558,430)]),
             
+            #Cuadrado
+            ([Point(790,490), Point(890,490)]),
+            ([Point(790,490), Point(790,590)]),
+            ([Point(890,490), Point(890,590)]),
+            ([Point(790,590), Point(890,590)]),
             ]
         
+
+
+
+#----------------------------Se crea el sonar--------------------------------
+sonar =  Sonar(Point(400,150), Point(200,165));
+#---------------------------------------------------------------------------
+
 #Pinta los segmentos para ver donde choca.
 pintarSegmentos(segments)
 
-
-#main loop
-
-#coeficiente de absorcion
-
-#----------------------------Se crea el sonar--------------------------------
-#sonar =  Sonar(Point(190,150), Point(190,250));
-sonar =  Sonar(Point(400,150), Point(200,165));
-#---------------------------------------------------------------------------
-"""
-t = threading.Thread(target = raytrace(None, sonar.clone(),0 ,0)) # f being the function that tells how the ball should move
-t.setDaemon(True) # Alternatively, you can use "t.daemon = True"
-t.start()
-"""
-
-#raytrace(None, sonar.clone(),0 ,0)
-
-#raytrace(None);
 while True:
     for event in pygame.event.get():
 
@@ -725,12 +723,14 @@ while True:
             #print(str(posX) +" "  + str(posY))
             sonar.pos=Point(posX,posY)
             #Crea el cono
+            rayos = 0
+            start_time = time.time()
             for j in range(0,ScanningRays):
                 scan()
                 #threads.append(t)
+            #print("--- %s segundos ---" % (time.time() - start_time))
             #Pinta nuevamente los segmentos
-            #raytrace(None, sonar.clone(),0 ,0)#LLamada del rayo despues del mov
-            pintarSegmentos(segments)
+            #pintarSegmentos(segments)
             drawSonar()
         elif (mouseClick[2]==1):#Cuando da click derecho
             #Resetea el mapa
@@ -739,18 +739,20 @@ while True:
             posX, posY = pygame.mouse.get_pos()
             sonar.dir=Point(posX,posY)
             #Crea el cono
+            rayos = 0
+            start_time = time.time()
             for j in range(0,ScanningRays):
                 scan()
+            #print("--- %s segundos ---" % (time.time() - start_time))
             #Pinta los segmentos
-            #raytrace(None, sonar.clone(),0 ,0)#LLamada del rayo despues del mov
-            pintarSegmentos(segments)
+            #pintarSegmentos(segments)
             drawSonar()
         if event.type == pygame.QUIT:
             running = False
             pygame.quit()
             exit()
             break
-       
+        #print(rayos)
     # Clear screen to white before drawing
     screen.fill((255, 255, 255))
     # Get a numpy array to display from the simulation
